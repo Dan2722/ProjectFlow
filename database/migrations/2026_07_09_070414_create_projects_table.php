@@ -9,20 +9,22 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('projects', function (Blueprint $table) {
-            $table->id();
-            $table->string('project_name');
+   public function up(): void
+{
+    Schema::create('projects', function (Blueprint $table) {
+        $table->id('project_id');
+        $table->string('project_name');
         $table->text('project_description');
         $table->date('start_project');
         $table->date('end_project');
         $table->string('status')->default('Not started'); 
-        $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
-        });
-    }
-
+        
+        // التعديل هنا: تحديد المفتاح المستهدف 'user_id' في جدول 'users'
+        $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+        
+        $table->timestamps();
+    });
+}
     /**
      * Reverse the migrations.
      */

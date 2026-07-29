@@ -2,32 +2,29 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    // تحديد المفتاح الرئيسي المخصص لجدولك
+    protected $primaryKey = 'user_id';
+
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * الحقول المسموح بتعبئتها جماعياً
      */
     protected $fillable = [
-        'name',
+        'username',
         'email',
         'password',
+        'role',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * الحقول المخفية عند تحويل الموديل لـ Array أو JSON
      */
     protected $hidden = [
         'password',
@@ -35,9 +32,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * تحويل أنواع الحقول
      */
     protected function casts(): array
     {
@@ -47,21 +42,20 @@ class User extends Authenticatable
         ];
     }
 
-
-    public function projects()
-    {
-        return $this->hasMany(Project::class);
-    }
-
-  
-    public function comments()
-    {
-        return $this->hasMany(Comment::class);
-    }
-
- 
     public function client()
-    {
-        return $this->hasOne(Client::class);
-    }
+{
+    return $this->hasOne(Client::class, 'user_id', 'user_id');
+}
+
+public function projects()
+{
+    return $this->hasMany(Project::class);
+}
+
+public function tasks()
+{
+    return $this->hasMany(Task::class);
+}
+
+
 }

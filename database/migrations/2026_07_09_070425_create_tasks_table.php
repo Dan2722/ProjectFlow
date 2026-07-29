@@ -10,18 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('tasks', function (Blueprint $table) {
-            $table->id();
-            $table->string('task_title');
+{
+    Schema::create('tasks', function (Blueprint $table) {
+        $table->id('task_id');
+        $table->string('task_title');
         $table->text('task_description');
         $table->date('start_task');
         $table->date('end_task');
         $table->string('status')->default('Not started');
-        $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
-            $table->timestamps();
-        });
-    }
+        
+        // التعديل هنا: تحديد 'project_id' كبارامتر ثاني للربط
+        $table->foreignId('project_id')->constrained('projects', 'project_id')->onDelete('cascade');
+        
+        $table->timestamps();
+    });
+}
 
 
     /**

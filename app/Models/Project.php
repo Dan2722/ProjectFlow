@@ -3,12 +3,25 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Project extends Model
 {
-    protected $fillable = ['project_name', 'project_description', 'begin_project', 'ending_project', 'status', 'user_id'];
+    use HasFactory;
 
-   
+    protected $primaryKey = 'project_id';
+
+    // تم إزالة المسافة الزائدة بعد company_name
+    protected $fillable = [
+        'project_name', 
+        'company_name', 
+        'project_description', 
+        'start_project', 
+        'end_project', 
+        'status', 
+        'user_id'
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -16,6 +29,6 @@ class Project extends Model
 
     public function tasks()
     {
-        return $this->hasMany(Task::class);
+        return $this->hasMany(Task::class, 'project_id', 'project_id');
     }
 }

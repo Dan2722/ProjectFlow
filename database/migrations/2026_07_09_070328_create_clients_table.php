@@ -10,17 +10,21 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('clients', function (Blueprint $table) {
-            $table->id();
-            $table->string('phone');
-            $table->string('company_name');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('clients', function (Blueprint $table) {
+        $table->id('client_id');
+        $table->string('phone');
+        $table->string('company_name');
+        
+        // التعديل هنا: إضافة اسم العمود 'user_id' كبارامتر ثانٍ
+        $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');
+        
+        $table->timestamps();
+    });
+}
 
   
+    
     
     /**
      * Reverse the migrations.

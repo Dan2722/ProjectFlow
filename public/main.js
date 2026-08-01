@@ -30,6 +30,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+    const projectStartDateInput = document.getElementById('projectStartDateInput');
+    const projectEndDateInput = document.getElementById('projectEndDateInput');
+
+    if (projectStartDateInput && projectEndDateInput) {
+        // دالة التحقق وتحديث الحد الأدنى لتاريخ النهاية
+        function validateDates() {
+            const startDate = projectStartDateInput.value;
+            const endDate = projectEndDateInput.value;
+
+            if (startDate) {
+                // منع تاريخ النهاية أن يكون أقل من تاريخ البدء
+                projectEndDateInput.min = startDate;
+
+                // إذا كان تاريخ النهاية الحالي أقدم من تاريخ البدء الجديد، احذفه
+                if (endDate && endDate < startDate) {
+                    projectEndDateInput.value = '';
+                    alert('تاريخ الانتهاء يجب أن يكون بعد أو مساوياً لتاريخ البدء.');
+                }
+            }
+        }
+
+        // الاستماع لأي تغيير يحدث في الحقلين
+        projectStartDateInput.addEventListener('change', validateDates);
+        projectEndDateInput.addEventListener('change', validateDates);
+    }
+});
 /* ==========================================
    إدارة عمليات المشاريع (Projects Operations)
 ========================================== */
@@ -45,7 +72,6 @@ function prepareAddProjectModal(storeUrl) {
     }
     if (methodInput) methodInput.value = "POST";
 
-    // تفريغ المدخل بالمعرف الجديد الفريد للمشاريع
     const companyInput = document.getElementById('projectCompanyNameInput');
     if (companyInput) companyInput.value = '';
 
@@ -68,7 +94,6 @@ function openEditProjectModal(button, updateUrl) {
 
     if (projectCard) {
         const nameInput = document.getElementById('projectNameInput');
-        // تم استخدام المعرف الفريد projectCompanyNameInput لتفادي التضارب مع مودال العملاء
         const companyInput = document.getElementById('projectCompanyNameInput');
         const descInput = document.getElementById('projectDescInput');
         const startDateInput = document.getElementById('projectStartDateInput');
@@ -106,9 +131,8 @@ function openDeleteProjectModal(button, deleteUrl) {
         deleteModal.show();
     }
 }
-
 /* ==========================================
-   إدارة عمليات المهام (عرض والتحكم بالـ Modals)
+    إدارة عمليات المهام (عرض والتحكم بالـ Modals)
 ========================================== */
 function validateDates() {
     const startDateInput = document.getElementById('startDateInput');
@@ -133,6 +157,12 @@ function prepareAddModal() {
         taskForm.action = "/tasks";
     }
     if (methodInput) methodInput.value = "POST";
+
+    // إزالة قيود التتواريخ عند الإضافة الجديدة لحين اختيار المشروع
+    const startDateInput = document.getElementById('startDateInput');
+    const endDateInput = document.getElementById('endDateInput');
+    if (startDateInput) { startDateInput.removeAttribute('min'); startDateInput.removeAttribute('max'); }
+    if (endDateInput) { endDateInput.removeAttribute('min'); endDateInput.removeAttribute('max'); }
 }
 
 function openEditModal(button) {
@@ -141,13 +171,15 @@ function openEditModal(button) {
 
     const taskId = taskCard.getAttribute('data-task-id');
     const taskTitle = taskCard.getAttribute('data-task-title') || '';
-    const projectName = taskCard.getAttribute('data-project-name') || '';
-    const companyName = taskCard.getAttribute('data-company-name') || '';
+    const projectId = taskCard.getAttribute('data-project-id') || '';
     const assignedTo = taskCard.getAttribute('data-assigned-to') || '';
     const description = taskCard.getAttribute('data-description') || '';
     const startDate = taskCard.getAttribute('data-start-date') || '';
     const endDate = taskCard.getAttribute('data-end-date') || '';
     const status = taskCard.getAttribute('data-status') || '';
+    
+    // إذا كنتِ تخزنين اسم الشركة داخل الـ Task Card أو تجلبينه عبر المشروع
+    const companyName = taskCard.getAttribute('data-company-name') || '';
 
     const modalTitle = document.getElementById('taskModalTitle');
     const taskForm = document.getElementById('taskForm');
@@ -158,15 +190,26 @@ function openEditModal(button) {
     if (methodInput) methodInput.value = "PUT";
 
     if (document.getElementById('taskNameInput')) document.getElementById('taskNameInput').value = taskTitle;
-    if (document.getElementById('projectNameInput')) document.getElementById('projectNameInput').value = projectName;
-    if (document.getElementById('companyNameInput')) document.getElementById('companyNameInput').value = companyName;
+    
+    if (document.getElementById('projectIdInput')) {
+        document.getElementById('projectIdInput').value = projectId;
+        updateProjectDatesLimits(); // لتحديث التواريخ والشركة تلقائياً بناءً على المشروع المحدد
+    }
+
+    if (document.getElementById('companyNameInput') && companyName) {
+        document.getElementById('companyNameInput').value = companyName;
+    }
+
     if (document.getElementById('assignedToInput')) document.getElementById('assignedToInput').value = assignedTo;
     if (document.getElementById('descriptionInput')) document.getElementById('descriptionInput').value = description;
-    if (document.getElementById('startDateInput')) document.getElementById('startDateInput').value = startDate;
-    if (document.getElementById('endDateInput')) document.getElementById('endDateInput').value = endDate;
-    if (document.getElementById('statusSelect')) document.getElementById('statusSelect').value = status;
     
-    validateDates();
+    if (document.getElementById('startDateInput')) {
+        document.getElementById('startDateInput').value = startDate ? startDate.split('T')[0] : '';
+    }
+    if (document.getElementById('endDateInput')) {
+        document.getElementById('endDateInput').value = endDate ? endDate.split('T')[0] : '';
+    }
+    if (document.getElementById('statusSelect')) document.getElementById('statusSelect').value = status;
 
     const modalEl = document.getElementById('taskModal');
     if (modalEl) {
@@ -177,6 +220,7 @@ function openEditModal(button) {
         modalInstance.show();
     }
 }
+
 function openDeleteModal(button) {
     const taskCard = button.closest('.task-card');
     if (!taskCard) return;
@@ -199,13 +243,44 @@ function openDeleteModal(button) {
         modalInstance.show();
     }
 }
+/* ==========================================
+   إدارة التعليقات (Comments Operations)
+========================================== */
+function prepareAddComment(formId) {
+    const commentForm = document.getElementById(formId);
+    if (commentForm) {
+        commentForm.reset();
+    }
+}
 
+function openEditCommentModal(commentId, currentContent, updateUrl) {
+    const commentInput = document.getElementById('editCommentInput');
+    const commentForm = document.getElementById('editCommentForm');
 
+    if (commentInput) commentInput.value = currentContent;
+    if (commentForm && updateUrl) commentForm.action = updateUrl;
+
+    const modalEl = document.getElementById('editCommentModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function openDeleteCommentModal(deleteUrl) {
+    const deleteForm = document.getElementById('deleteCommentForm');
+    if (deleteForm && deleteUrl) deleteForm.action = deleteUrl;
+
+    const modalEl = document.getElementById('deleteCommentModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
 
 /* ==========================================
    إدارة العملاء
 ========================================== */
-
 function prepareAddClientModal(storeUrl) {
     const modalTitle = document.getElementById('clientModalTitle');
     const clientForm = document.getElementById('clientForm');
@@ -266,6 +341,7 @@ function openDeleteClientModal(button, deleteUrl) {
         deleteModal.show();
     }
 }
+
 /* ==========================================
    Login Page JS
 ========================================== */
@@ -341,6 +417,53 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ==========================================
+   Forgot Password Logic
+========================================== */
+document.addEventListener('DOMContentLoaded', () => {
+    const resetForm = document.getElementById('resetForm');
+    const emailInput = document.getElementById('emailInput');
+    const emailError = document.getElementById('emailError');
+    const formSection = document.getElementById('formSection');
+    const successState = document.getElementById('successState');
+
+    if (resetForm) {
+        resetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            if (emailInput) emailInput.classList.remove('is-invalid');
+            if (emailError) {
+                emailError.textContent = '';
+                emailError.classList.add('d-none');
+            }
+
+            const email = emailInput ? emailInput.value.trim() : '';
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@fvs\.com\.sa$/i;
+
+            if (!email) {
+                showErrorMsg('يرجى إدخال البريد الإلكتروني');
+                return;
+            }
+
+            if (!emailPattern.test(email)) {
+                showErrorMsg('الصيغة غير صحيحة، يجب أن ينتهي البريد بـ name@fvs.com.sa');
+                return;
+            }
+
+            if (formSection) formSection.classList.add('d-none');
+            if (successState) successState.classList.remove('d-none');
+        });
+    }
+
+    function showErrorMsg(msg) {
+        if (emailInput) emailInput.classList.add('is-invalid');
+        if (emailError) {
+            emailError.textContent = msg;
+            emailError.classList.remove('d-none');
+        }
+    }
+});
+
+/* ==========================================
    دالة عرض رسائل النجاح والتنبيه الموحدة
 ========================================== */
 function showStatusMessage(message) {
@@ -370,7 +493,7 @@ function handleProfileSubmit(event) {
     const phoneInput = document.getElementById('profilePhoneInput');
     const phoneRegex = /^05[0-9]{8}$/;
 
-    if (phoneInput) {
+    if (phoneInput && phoneInput.value.trim() !== "") {
         if (!phoneRegex.test(phoneInput.value)) {
             phoneInput.setCustomValidity("يجب أن يبدأ رقم الجوال بـ 05 ويتكون من 10 أرقام");
             phoneInput.reportValidity();
@@ -607,3 +730,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedLang = localStorage.getItem('preferredLang') || 'ar';
     changeLanguage(savedLang);
 });
+
+// js notification
+function markNotificationsAsRead() {
+    let url = window.notificationsReadUrl || '/notifications/read';
+
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const badge = document.getElementById('notification-badge');
+            const unreadText = document.getElementById('unread-text-count');
+            
+            if (badge) badge.remove();
+            if (unreadText) unreadText.innerText = ' 0 جديد ';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// js "tasks faield "
+function updateProjectDatesLimits() {
+    const projectSelect = document.getElementById('projectIdInput');
+    const startDateInput = document.getElementById('startDateInput');
+    const endDateInput = document.getElementById('endDateInput');
+    const companyInput = document.getElementById('companyNameInput'); // حقل اسم الشركة في النموذج
+
+    if (!projectSelect) return;
+
+    const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+    
+    // جلب التواريخ واسم الشركة بالأسماء الصحيحة المطابقة لقاعدة البيانات
+    const projectStart = selectedOption.getAttribute('data-start');
+    const projectEnd = selectedOption.getAttribute('data-end');
+    const companyName = selectedOption.getAttribute('data-company');
+
+    // تعبئة حقل اسم الشركة تلقائياً بمجرد اختيار المشروع (إذا كان موجوداً بالنموذج)
+    if (companyInput && companyName) {
+        companyInput.value = companyName;
+    }
+
+    if (!startDateInput || !endDateInput) return;
+
+    if (projectStart && projectEnd && projectStart !== "" && projectEnd !== "") {
+        const minDate = projectStart.split('T')[0];
+        const maxDate = projectEnd.split('T')[0];
+
+        startDateInput.min = minDate;
+        startDateInput.max = maxDate;
+        
+        endDateInput.min = minDate;
+        endDateInput.max = maxDate;
+    } else {
+        startDateInput.removeAttribute('min');
+        startDateInput.removeAttribute('max');
+        endDateInput.removeAttribute('min');
+        endDateInput.removeAttribute('max');
+    }
+}

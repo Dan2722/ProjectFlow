@@ -17,12 +17,15 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-             $table->string('role')->default('user');
+            $table->string('role')->default('admin');
+            
+            // الحقول الجديدة للملف الشخصي
+            $table->string('phone')->nullable();
+            $table->string('company_name')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
         });
-
-        
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

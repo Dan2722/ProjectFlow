@@ -48,17 +48,18 @@
                 @enderror
             </div>
 
-            <div class="w-75">
-                <label class="form-label custom-label mb-1">رقم الجوال <span class="text-danger">*</span></label>
-                <input class="form-control custom-input @error('phone') is-invalid @enderror" dir="ltr" name="phone" pattern="^05[0-9]{8}$" placeholder="05xxxxxxxx" required title="يجب أن يبدأ رقم الجوال بـ 05 ويتكون من 10 أرقام" type="tel" value="{{ old('phone', $client->phone ?? '') }}"/>
+        <div class="w-75">
+                <label class="form-label custom-label mb-1">رقم الجوال</label>
+                <input class="form-control custom-input @error('phone') is-invalid @enderror" dir="ltr" name="phone" pattern="^05[0-9]{8}$" placeholder="05xxxxxxxx" title="يجب أن يبدأ رقم الجوال بـ 05 ويتكون من 10 أرقام" type="tel" value="{{ old('phone', $user->phone ?? '') }}"/>
                 @error('phone')
                     <span class="text-danger small">{{ $message }}</span>
                 @enderror
             </div>
 
+         
             <div class="w-75">
-                <label class="form-label custom-label mb-1">الشركة <span class="text-danger">*</span></label>
-                <input class="form-control custom-input @error('company_name') is-invalid @enderror" name="company_name" required type="text" value="{{ old('company_name', $client->company_name ?? '') }}"/>
+                <label class="form-label custom-label mb-1">الشركة</label>
+                <input class="form-control custom-input @error('company_name') is-invalid @enderror" name="company_name" type="text" value="{{ old('company_name', $user->company_name ?? '') }}"/>
                 @error('company_name')
                     <span class="text-danger small">{{ $message }}</span>
                 @enderror

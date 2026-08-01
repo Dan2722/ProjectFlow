@@ -3,57 +3,72 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\Request;
+use App\Notifications\SystemActivityNotification;
 
 class TaskController extends Controller
 {
     public function index()
     {
-        $tasks = Task::latest()->get();
-        return view('tasks.index', compact('tasks'));
+        $tasks = Task::with(['project', 'assignedUser'])->latest()->get();
+        
+        // جلب المشاريع والموظفين لتعبئة القوائم المنسدلة في واجهة المهام
+        $projects = Project::all();
+        $employees = User::where('role', 'employee')->get(); // أو User::all() إذا لم تفعيل الأدوار بعد
+
+        return view('tasks.index', compact('tasks', 'projects', 'employees'));
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'task_title'       => 'required|string|max:255',
-            'project_name'     => 'required|string|max:255',
-            'company_name'     => 'required|string|max:255',
-            'assigned_to'      => 'required|string|max:255',
-            'task_description' => 'required|string',
-            'start_task'        => 'required|date',
-            'end_task'          => 'required|date',
-            'status'           => 'required|string',
-        ]);
+{
+    $validated = $request->validate([
+        'task_title'     => 'required|string|max:255',
+        'project_id'     => 'required|exists:projects,project_id',
+        'assigned_to'    => 'nullable|exists:users,id',
+        'task_description' => 'required|string',
+        'start_task'     => 'required|date',
+        'end_task'       => 'required|date|after_or_equal:start_task',
+        'status'         => 'required|string',
+    ]);
 
-        Task::create($validated);
+    $task = Task::create($validated);
 
-        return redirect()->back()->with('success', 'تم إضافة المهمة بنجاح');
-    }
+    // بقية كود الإشعارات لديكِ...
+    return redirect()->back()->with('success', 'تم إضافة المهمة بنجاح');
+}
+public function update(Request $request, $id)
+{
+    $validated = $request->validate([
+        'task_title'       => 'required|string|max:255',
+        'project_id'       => 'required|exists:projects,project_id',
+        'assigned_to'      => 'nullable|exists:users,id',
+        'task_description' => 'required|string',
+        'start_task'       => 'required|date',
+        'end_task'         => 'required|date|after_or_equal:start_task',
+        'status'           => 'required|string',
+    ]);
 
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'task_title'       => 'required|string|max:255',
-            'project_name'     => 'required|string|max:255',
-            'company_name'     => 'required|string|max:255',
-            'assigned_to'      => 'required|string|max:255',
-            'task_description' => 'required|string',
-            'start_task'        => 'required|date',
-            'end_task'          => 'required|date',
-            'status'           => 'required|string',
-        ]);
+    $task = Task::findOrFail($id);
+    $task->update($validated);
 
-        $task = Task::where('task_id', $id)->firstOrFail();
-        $task->update($validated);
-
-        return redirect()->back()->with('success', 'تم تعديل المهمة بنجاح');
-    }
-
+    return redirect()->back()->with('success', 'تم تحديث المهمة بنجاح');
+}
     public function destroy($id)
     {
         $task = Task::where('task_id', $id)->firstOrFail();
+        $taskTitle = $task->task_title;
         $task->delete();
+
+        // إشعار الحذف
+        if (auth()->check()) {
+            auth()->user()->notify(new SystemActivityNotification(
+                'حذف مهمة',
+                'تم حذف المهمة: ' . $taskTitle,
+                route('tasks.index')
+            ));
+        }
 
         return redirect()->back()->with('success', 'تم حذف المهمة بنجاح');
     }

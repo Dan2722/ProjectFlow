@@ -9,61 +9,46 @@ use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        $user = auth()->user();
-        $userId = $user->user_id ?? $user->id;
+   public function index()
+{
+    // إجمالي المشاريع والمهام
+    $totalProjects = Project::count();
+    $totalTasks = Task::count();
 
-        // إجمالي المشاريع للمستخدم الحالي
-        $totalProjects = Project::where('user_id', $userId)->count();
-        $projectIds = Project::where('user_id', $userId)->pluck('project_id');
+    // عداد المشاريع والمهام لكل حالة (تأكدي أن أسماء الحالات في قاعدة البيانات تطابق النصوص أدناه مثل 'مكتملة', 'قيد التنفيذ'...)
+    // ملاحظة: استبدلي 'completed', 'in_progress' بقيم الحالات المخزنة لديكِ في قاعدة البيانات
+    
+    // 1. مكتملة
+    $projectCompletedCount = Project::where('status', 'مكتملة')->count();
+    $taskCompletedCount = Task::where('status', 'مكتملة')->count();
 
-       // 1. حساب إحصائيات حالات المشاريع (Project Statuses)
-$projectCompletedCount  = Project::where('user_id', $userId)->where('status', 'مكتملة')->count();
-$projectInReviewCount   = Project::where('user_id', $userId)->where('status', 'قيد المراجعة')->count();
-$projectInProgressCount = Project::where('user_id', $userId)->where('status', 'قيد التنفيذ')->count();
-$projectPendingCount    = Project::where('user_id', $userId)->where('status', 'قيد الانتظار')->count();
-$projectPausedCount     = Project::where('user_id', $userId)->where('status', 'متوقف مؤقتاً')->count();
+    // 2. قيد المراجعة
+    $projectInReviewCount = Project::where('status', 'قيد المراجعة')->count();
+    $taskInReviewCount = Task::where('status', 'قيد المراجعة')->count();
 
-        // 2. حساب إحصائيات المهام (Task Statuses)
-        $totalTasks = 0;
-        $taskCompletedCount = 0;
-        $taskInReviewCount = 0;
-        $taskInProgressCount = 0;
-        $taskPendingCount = 0;
-        $taskPausedCount = 0;
+    // 3. قيد التنفيذ
+    $projectInProgressCount = Project::where('status', 'قيد التنفيذ')->count();
+    $taskInProgressCount = Task::where('status', 'قيد التنفيذ')->count();
 
-        if ($projectIds->count() > 0) {
-            $totalTasks = Task::whereIn('project_id', $projectIds)->count();
-            
-            $statusColumn = Schema::hasColumn('tasks', 'status') ? 'status' : (Schema::hasColumn('tasks', 'task_status') ? 'task_status' : null);
+    // 4. قيد الانتظار
+    $projectPendingCount = Project::where('status', 'قيد الانتظار')->count();
+    $taskPendingCount = Task::where('status', 'قيد الانتظار')->count();
 
-            if ($statusColumn) {
-                $taskCompletedCount  = Task::whereIn('project_id', $projectIds)->where($statusColumn, 'completed')->count();
-                $taskInReviewCount   = Task::whereIn('project_id', $projectIds)->where($statusColumn, 'review')->count();
-                $taskInProgressCount = Task::whereIn('project_id', $projectIds)->where($statusColumn, 'in_progress')->count();
-                $taskPendingCount    = Task::whereIn('project_id', $projectIds)->where($statusColumn, 'pending')->count();
-                $taskPausedCount     = Task::whereIn('project_id', $projectIds)->where($statusColumn, 'paused')->count();
-            }
-        }
+    // 5. متوقف مؤقتاً
+    $projectPausedCount = Project::where('status', 'متوقف مؤقتاً')->count();
+    $taskPausedCount = Task::where('status', 'متوقف مؤقتاً')->count();
 
-        // جلب المشاريع الأخيرة
-        $recentProjects = Project::where('user_id', $userId)->latest('project_id')->take(4)->get();
+    // المشاريع الأخيرة التي طلع عليها المستخدم (أو أحدث المشاريع المضافة)
+    $recentProjects = Project::with('tasks')->latest()->take(5)->get();
 
-        return view('dashboard.index', compact(
-            'totalProjects',
-            'totalTasks',
-            'projectCompletedCount',
-            'projectInReviewCount',
-            'projectInProgressCount',
-            'projectPendingCount',
-            'projectPausedCount',
-            'taskCompletedCount',
-            'taskInReviewCount',
-            'taskInProgressCount',
-            'taskPendingCount',
-            'taskPausedCount',
-            'recentProjects'
-        ));
-    }
+    return view('dashboard.index', compact(
+        'totalProjects', 'totalTasks',
+        'projectCompletedCount', 'taskCompletedCount',
+        'projectInReviewCount', 'taskInReviewCount',
+        'projectInProgressCount', 'taskInProgressCount',
+        'projectPendingCount', 'taskPendingCount',
+        'projectPausedCount', 'taskPausedCount',
+        'recentProjects'
+    ));
+}
 }

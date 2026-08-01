@@ -6,30 +6,32 @@
     <div class="header-left d-flex gap-3 align-items-center">
         @auth
             @php
-                $unreadNotifications = auth()->user()->unreadNotifications;
+                $unreadCount = auth()->user()->unreadNotifications->count();
                 $allNotifications = auth()->user()->notifications()->take(5)->get();
             @endphp
 
             <div class="dropdown">
                 <button class="nav-icon-btn border-0 d-flex align-items-center justify-content-center position-relative"
-                        type="button" id="notificationsDropdown" data-bs-toggle="dropdown"
-                        aria-expanded="false" aria-label="الإشعارات">
-                    <i class="fa-solid fa-bell"></i>
-                    
-                    {{-- إظهار النقطة الحمراء فقط عند وجود إشعارات غير مقروءة --}}
-                    @if($unreadNotifications->count() > 0)
-                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
-                              style="width: 8px; height: 8px;"></span>
-                    @endif
-                </button>
-
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2 mt-2 notification-menu"
+        type="button" id="notificationsDropdown" data-bs-toggle="dropdown"
+        aria-expanded="false" aria-label="الإشعارات"
+        onclick="markNotificationsAsRead()">
+    <i class="fa-solid fa-bell"></i>
+    
+    {{-- عرض عدد الإشعارات غير المقروءة بدلاً من النقطة فقط --}}
+    @if($unreadCount > 0)
+        <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+              style="font-size: 9px; padding: 3px 6px;">
+            {{ $unreadCount }}
+        </span>
+    @endif
+</button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2 mt-2 notification-menu text-end"
                     aria-labelledby="notificationsDropdown" style="width: 310px; border-radius: 14px;">
                     
                     <li class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
                         <span class="fw-bold fs-6 text-dark">الإشعارات</span>
-                        <span class="badge bg-light text-secondary" style="font-size: 11px;">
-                            {{ $unreadNotifications->count() }} جديد
+                        <span id="unread-text-count" class="badge bg-light text-secondary" style="font-size: 11px;">
+                            {{ $unreadCount }} جديد
                         </span>
                     </li>
 
@@ -42,7 +44,7 @@
                                         {{ $notification->data['title'] ?? 'إشعار' }}
                                     </span>
                                     <span class="text-muted" style="font-size: 10px;">
-                                        {{ $notification->created_at->diffForHumans() }}
+                                        {{ $notification->created_at->locale('ar')->diffForHumans() }}
                                     </span>
                                 </div>
                                 <p class="mb-0 text-secondary" style="font-size: 12px; line-height: 1.4;">

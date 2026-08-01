@@ -10,18 +10,18 @@ class Task extends Model
     use HasFactory;
 
     // تحديد المفتاح الأساسي للجدول
-    protected $primaryKey = 'task_id'; // المفتاح الرئيسي
-    protected $guarded = [];
-    
+    protected $primaryKey = 'task_id'; 
+
     protected $fillable = [
-        'task_title',
-        'project_name',
-        'task_description',
-        'start_task',
-        'end_task',
-        'status',
-        'project_id',
-    ];
+    'task_title',
+    'project_id',    
+    'assigned_to',
+    'task_description',
+    'start_task',
+    'end_task',
+    'status',
+];
+
 
     public function project()
     {
@@ -32,4 +32,9 @@ class Task extends Model
     {
         return $this->hasMany(Comment::class, 'task_id', 'task_id');
     }
+
+    public function assignedUser()
+{
+    return $this->belongsTo(User::class, 'assigned_to');
+}
 }

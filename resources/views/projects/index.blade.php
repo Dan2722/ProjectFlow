@@ -127,17 +127,18 @@
                         <textarea class="form-control custom-input text-end" id="projectDescInput" name="project_description" rows="2" required></textarea>
                     </div>
 
-                    <!-- التواريخ -->
-                    <div class="row g-2 mb-3">
-                        <div class="col-6 text-end">
-                            <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
-                            <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date"/>
-                        </div>
-                        <div class="col-6 text-end">
-                            <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
-                            <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date"/>
-                        </div>
-                    </div>
+                  <!-- التواريخ -->
+<div class="row g-2 mb-3">
+    <div class="col-6 text-end">
+        <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
+        <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" min="{{ date('Y-m-d') }}"/>
+    </div>
+    <div class="col-6 text-end">
+        <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
+        <!-- أضفنا min هنا أيضاً لتاريخ الانتهاء -->
+        <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date" min="{{ date('Y-m-d') }}"/>
+    </div>
+</div>
 
                     <!-- الحالة -->
                     <div class="mb-4 text-end">
@@ -171,7 +172,7 @@
                     @csrf
                     @method('DELETE')
                     <div class="d-flex justify-content-center gap-3">
-                        <button type="submit" class="btn btn-delete-confirm">تأكيد الحذف</button>
+                        <button type="submit" class="btn btn-delete-confirm"> حذف</button>
                         <button type="button" class="btn btn-delete-cancel" data-bs-dismiss="modal">إلغاء</button>
                     </div>
                 </form>

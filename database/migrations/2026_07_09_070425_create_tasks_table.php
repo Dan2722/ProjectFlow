@@ -10,22 +10,24 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('tasks', function (Blueprint $table) {
-        $table->id('task_id');
-        $table->string('task_title');
-        $table->text('task_description');
-        $table->date('start_task');
-        $table->date('end_task');
-        $table->string('status')->default('Not started');
-        
-        // التعديل هنا: تحديد 'project_id' كبارامتر ثاني للربط
-        $table->foreignId('project_id')->constrained('projects', 'project_id')->onDelete('cascade');
-        
-        $table->timestamps();
-    });
-}
-
+    {
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id('task_id');
+            $table->string('task_title');
+            $table->text('task_description');
+            $table->date('start_task');
+            $table->date('end_task');
+            $table->string('status')->default('Not started');
+            
+            // ربط المهمة بالمشروع
+            $table->foreignId('project_id')->constrained('projects', 'project_id')->onDelete('cascade');
+            
+            // ربط المهمة بالمستخدم (الموظف) وجعله اختياري (nullable) مؤقتاً
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
+            
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

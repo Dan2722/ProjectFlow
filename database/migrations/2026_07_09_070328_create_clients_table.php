@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
 {
-    Schema::create('clients', function (Blueprint $table) {
-        $table->id('client_id');
-        $table->string('phone');
-        $table->string('company_name');
+   Schema::create('clients', function (Blueprint $table) {
+            $table->id('client_id');
+            $table->string('name');         
+            $table->string('company_name'); 
+            $table->string('email');        
+            $table->string('phone');        
+            $table->string('project_name');
         
         // التعديل هنا: إضافة اسم العمود 'user_id' كبارامتر ثانٍ
         $table->foreignId('user_id')->constrained('users', 'user_id')->onDelete('cascade');

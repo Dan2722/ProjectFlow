@@ -10,7 +10,12 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
 
-
+Route::get('/notifications/read', function () {
+    if (auth()->check()) {
+        auth()->user()->unreadNotifications->markAsRead();
+    }
+    return response()->json(['status' => 'success']);
+})->name('notifications.read');
 
 // داخل مجموعة الـ middleware المحمي (auth)
 Route::middleware(['auth'])->group(function () {

@@ -16,12 +16,14 @@ class User extends Authenticatable
     /**
      * الحقول المسموح بتعبئتها جماعياً
      */
-    protected $fillable = [
-        'username',
-        'email',
-        'password',
-        'role',
-    ];
+   protected $fillable = [
+    'username',
+    'email',
+    'password',
+    'role',
+    'phone',
+    'company_name',
+];
 
     /**
      * الحقول المخفية عند تحويل الموديل لـ Array أو JSON

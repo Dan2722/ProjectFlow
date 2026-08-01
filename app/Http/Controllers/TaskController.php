@@ -3,40 +3,58 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
-use App\Models\Project;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
-    // عرض جميع المهام
     public function index()
     {
-        // جلب المهام مع المشروع التابعة له والتعليقات
-        $tasks = Task::with(['project', 'comments'])->get();
+        $tasks = Task::latest()->get();
         return view('tasks.index', compact('tasks'));
     }
 
-    // حفظ مهمة جديدة
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'task_title'       => 'required|string|max:255',
-            'task_description' => 'nullable|string',
+            'project_name'     => 'required|string|max:255',
+            'company_name'     => 'required|string|max:255',
+            'assigned_to'      => 'required|string|max:255',
+            'task_description' => 'required|string',
             'start_task'        => 'required|date',
-            'end_task'          => 'nullable|date|after_or_equal:start_task',
-            'status'            => 'required|string',
-            'project_id'        => 'required|exists:projects,id',
+            'end_task'          => 'required|date',
+            'status'           => 'required|string',
         ]);
 
-        Task::create([
-            'task_title'       => $request->task_title,
-            'task_description' => $request->task_description,
-            'start_task'        => $request->start_task,
-            'end_task'          => $request->end_task,
-            'status'            => $request->status,
-            'project_id'        => $request->project_id,
+        Task::create($validated);
+
+        return redirect()->back()->with('success', 'تم إضافة المهمة بنجاح');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'task_title'       => 'required|string|max:255',
+            'project_name'     => 'required|string|max:255',
+            'company_name'     => 'required|string|max:255',
+            'assigned_to'      => 'required|string|max:255',
+            'task_description' => 'required|string',
+            'start_task'        => 'required|date',
+            'end_task'          => 'required|date',
+            'status'           => 'required|string',
         ]);
 
-        return redirect()->back()->with('success', 'تمت إضافة المهمة بنجاح!');
+        $task = Task::where('task_id', $id)->firstOrFail();
+        $task->update($validated);
+
+        return redirect()->back()->with('success', 'تم تعديل المهمة بنجاح');
+    }
+
+    public function destroy($id)
+    {
+        $task = Task::where('task_id', $id)->firstOrFail();
+        $task->delete();
+
+        return redirect()->back()->with('success', 'تم حذف المهمة بنجاح');
     }
 }

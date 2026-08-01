@@ -10,6 +10,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
 
+
+
 // داخل مجموعة الـ middleware المحمي (auth)
 Route::middleware(['auth'])->group(function () {
     // ... المسارات الأخرى ...
@@ -61,4 +63,7 @@ Route::middleware(['auth'])->group(function () {
     // مسارات إضافية للمهام والتعليقات
     Route::get('/project-tasks/{task}', fn ($task) => view('tasks.project-show', compact('task')))->name('tasks.project-show');
     Route::post('tasks/{task}/comments', [CommentController::class, 'store'])->name('comments.store');
+    
+    Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 });

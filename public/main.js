@@ -108,7 +108,7 @@ function openDeleteProjectModal(button, deleteUrl) {
 }
 
 /* ==========================================
-   إدارة عمليات المهام (عرض الـ Modals فقط)
+   إدارة عمليات المهام (عرض والتحكم بالـ Modals)
 ========================================== */
 function validateDates() {
     const startDateInput = document.getElementById('startDateInput');
@@ -120,131 +120,127 @@ function validateDates() {
             endDateInput.value = startDateInput.value;
         }
     }
-
-    const projectStartDateInput = document.getElementById('projectStartDateInput');
-    const projectEndDateInput = document.getElementById('projectEndDateInput');
-
-    if (projectStartDateInput && projectEndDateInput && projectStartDateInput.value) {
-        projectEndDateInput.min = projectStartDateInput.value;
-        if (projectEndDateInput.value && projectEndDateInput.value < projectStartDateInput.value) {
-            projectEndDateInput.value = projectStartDateInput.value;
-        }
-    }
 }
 
 function prepareAddModal() {
     const modalTitle = document.getElementById('taskModalTitle');
     const taskForm = document.getElementById('taskForm');
+    const methodInput = document.getElementById('taskFormMethod');
     
-    if (modalTitle) modalTitle.innerText = "اضافة مهمة";
-    if (taskForm) taskForm.reset();
+    if (modalTitle) modalTitle.innerText = "إضافة مهمة";
+    if (taskForm) {
+        taskForm.reset();
+        taskForm.action = "/tasks";
+    }
+    if (methodInput) methodInput.value = "POST";
 }
 
 function openEditModal(button) {
     const taskCard = button.closest('.task-card');
     if (!taskCard) return;
 
-    const taskName = taskCard.getAttribute('data-task-name') || '';
-    
-    const modalTitle = document.getElementById('taskModalTitle');
-    const taskNameInput = document.getElementById('taskNameInput');
+    const taskId = taskCard.getAttribute('data-task-id');
+    const taskTitle = taskCard.getAttribute('data-task-title') || '';
+    const projectName = taskCard.getAttribute('data-project-name') || '';
+    const companyName = taskCard.getAttribute('data-company-name') || '';
+    const assignedTo = taskCard.getAttribute('data-assigned-to') || '';
+    const description = taskCard.getAttribute('data-description') || '';
+    const startDate = taskCard.getAttribute('data-start-date') || '';
+    const endDate = taskCard.getAttribute('data-end-date') || '';
+    const status = taskCard.getAttribute('data-status') || '';
 
-    if (modalTitle) modalTitle.innerText = "تعديل المهام";
-    if (taskNameInput) taskNameInput.value = taskName;
+    const modalTitle = document.getElementById('taskModalTitle');
+    const taskForm = document.getElementById('taskForm');
+    const methodInput = document.getElementById('taskFormMethod');
+
+    if (modalTitle) modalTitle.innerText = "تعديل المهمة";
+    if (taskForm) taskForm.action = `/tasks/${taskId}`;
+    if (methodInput) methodInput.value = "PUT";
+
+    if (document.getElementById('taskNameInput')) document.getElementById('taskNameInput').value = taskTitle;
+    if (document.getElementById('projectNameInput')) document.getElementById('projectNameInput').value = projectName;
+    if (document.getElementById('companyNameInput')) document.getElementById('companyNameInput').value = companyName;
+    if (document.getElementById('assignedToInput')) document.getElementById('assignedToInput').value = assignedTo;
+    if (document.getElementById('descriptionInput')) document.getElementById('descriptionInput').value = description;
+    if (document.getElementById('startDateInput')) document.getElementById('startDateInput').value = startDate;
+    if (document.getElementById('endDateInput')) document.getElementById('endDateInput').value = endDate;
+    if (document.getElementById('statusSelect')) document.getElementById('statusSelect').value = status;
     
+    validateDates();
+
     const modalEl = document.getElementById('taskModal');
     if (modalEl) {
-        const taskModal = new bootstrap.Modal(modalEl);
-        taskModal.show();
+        let modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modalEl);
+        }
+        modalInstance.show();
     }
 }
-
 function openDeleteModal(button) {
     const taskCard = button.closest('.task-card');
     if (!taskCard) return;
 
-    const taskName = taskCard.getAttribute('data-task-name') || taskCard.querySelector('.task-name')?.innerText || '';
+    const taskId = taskCard.getAttribute('data-task-id');
+    const taskTitle = taskCard.getAttribute('data-task-title') || taskCard.querySelector('.task-name')?.innerText || '';
     
     const deleteModalText = document.getElementById('deleteModalText');
-    if (deleteModalText) deleteModalText.innerText = `هل تريد حذف مهمة ${taskName} ؟`;
+    const deleteTaskForm = document.getElementById('deleteTaskForm');
+
+    if (deleteModalText) deleteModalText.innerText = `هل تريد حذف مهمة "${taskTitle.trim()}" ؟`;
+    if (deleteTaskForm) deleteTaskForm.action = `/tasks/${taskId}`;
 
     const modalEl = document.getElementById('deleteModal');
     if (modalEl) {
-        const deleteModal = new bootstrap.Modal(modalEl);
-        deleteModal.show();
+        let modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modalEl);
+        }
+        modalInstance.show();
     }
 }
 
-function confirmDelete() {
-    const deleteModalEl = document.getElementById('deleteModal');
-    if (deleteModalEl) {
-        const deleteModalInstance = bootstrap.Modal.getInstance(deleteModalEl);
-        if (deleteModalInstance) deleteModalInstance.hide();
-    }
-    
-    showStatusMessage("تم حذف المهمة بنجاح");
-}
 
-function handleTaskSubmit(event) {
-    event.preventDefault();
-    const modalTitle = document.getElementById('taskModalTitle');
-    const title = modalTitle ? modalTitle.innerText : '';
-    
-    const taskModalEl = document.getElementById('taskModal');
-    if (taskModalEl) {
-        const taskModalInstance = bootstrap.Modal.getInstance(taskModalEl);
-        if (taskModalInstance) taskModalInstance.hide();
-    }
-    
-    if (title.includes("اضافة")) {
-        showStatusMessage("تم إضافة المهمة بنجاح");
-    } else {
-        showStatusMessage("تم حفظ التعديلات بنجاح");
-    }
-}
 
 /* ==========================================
    إدارة العملاء
 ========================================== */
-let isEditMode = false;
-let editingClientCard = null;
 
-function prepareAddClientModal() {
-    isEditMode = false;
-    editingClientCard = null;
-
+function prepareAddClientModal(storeUrl) {
     const modalTitle = document.getElementById('clientModalTitle');
     const clientForm = document.getElementById('clientForm');
+    const methodInput = document.getElementById('clientFormMethod');
 
-    if (modalTitle) modalTitle.innerText = 'إضافة عميل';
-    if (clientForm) clientForm.reset();
-    
+    if (modalTitle) modalTitle.innerText = "إضافة عميل";
+    if (clientForm) {
+        clientForm.reset();
+        if (storeUrl) clientForm.action = storeUrl;
+    }
+    if (methodInput) methodInput.value = "POST";
+
     const modalEl = document.getElementById('clientModal');
     if (modalEl) {
-        const clientModal = new bootstrap.Modal(modalEl);
-        clientModal.show();
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
     }
 }
 
-function openEditClientModal(button) {
-    isEditMode = true;
-    editingClientCard = button.closest('.client-card-wrapper');
-
+function openEditClientModal(button, updateUrl) {
+    const clientCard = button.closest('.client-card-wrapper');
     const modalTitle = document.getElementById('clientModalTitle');
-    if (modalTitle) modalTitle.innerText = 'تعديل بيانات العميل';
+    const clientForm = document.getElementById('clientForm');
+    const methodInput = document.getElementById('clientFormMethod');
 
-    if (editingClientCard) {
-        const clientName = document.getElementById('clientNameInput');
-        const companyName = document.getElementById('companyNameInput');
-        const clientEmail = document.getElementById('clientEmailInput');
-        const clientPhone = document.getElementById('clientPhoneInput');
-        const clientProject = document.getElementById('clientProjectInput');
+    if (modalTitle) modalTitle.innerText = "تعديل بيانات العميل";
+    if (clientForm && updateUrl) clientForm.action = updateUrl;
+    if (methodInput) methodInput.value = "PUT";
 
-        if (clientName) clientName.value = editingClientCard.querySelector('.client-name')?.innerText || '';
-        if (companyName) companyName.value = editingClientCard.querySelector('.company-name')?.innerText || '';
-        if (clientEmail) clientEmail.value = editingClientCard.querySelector('.client-email')?.innerText || '';
-        if (clientPhone) clientPhone.value = editingClientCard.querySelector('.client-phone')?.innerText || '';
-        if (clientProject) clientProject.value = editingClientCard.querySelector('.client-project')?.innerText || '';
+    if (clientCard) {
+        document.getElementById('clientNameInput').value = clientCard.getAttribute('data-client-name') || '';
+        document.getElementById('companyNameInput').value = clientCard.getAttribute('data-company-name') || '';
+        document.getElementById('clientEmailInput').value = clientCard.getAttribute('data-client-email') || '';
+        document.getElementById('clientPhoneInput').value = clientCard.getAttribute('data-client-phone') || '';
+        document.getElementById('clientProjectInput').value = clientCard.getAttribute('data-client-project') || '';
     }
 
     const modalEl = document.getElementById('clientModal');
@@ -254,46 +250,15 @@ function openEditClientModal(button) {
     }
 }
 
-function handleClientSubmit(event) {
-    event.preventDefault();
-
-    if (isEditMode && editingClientCard) {
-        const clientName = document.getElementById('clientNameInput')?.value;
-        const companyName = document.getElementById('companyNameInput')?.value;
-        const clientEmail = document.getElementById('clientEmailInput')?.value;
-        const clientPhone = document.getElementById('clientPhoneInput')?.value;
-        const clientProject = document.getElementById('clientProjectInput')?.value;
-
-        const elName = editingClientCard.querySelector('.client-name');
-        const elCompany = editingClientCard.querySelector('.company-name');
-        const elEmail = editingClientCard.querySelector('.client-email');
-        const elPhone = editingClientCard.querySelector('.client-phone');
-        const elProject = editingClientCard.querySelector('.client-project');
-
-        if (elName && clientName) elName.innerText = clientName;
-        if (elCompany && companyName) elCompany.innerText = companyName;
-        if (elEmail && clientEmail) elEmail.innerText = clientEmail;
-        if (elPhone && clientPhone) elPhone.innerText = clientPhone;
-        if (elProject && clientProject) elProject.innerText = clientProject;
-
-        showStatusMessage("تم حفظ التعديلات بنجاح");
-    } else {
-        showStatusMessage("تم إضافة العميل بنجاح");
-    }
-
-    const modalEl = document.getElementById('clientModal');
-    if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-    }
-}
-
-function openDeleteClientModal(button) {
+function openDeleteClientModal(button, deleteUrl) {
     const clientCard = button.closest('.client-card-wrapper');
-    const clientName = clientCard ? clientCard.querySelector('.client-name')?.innerText : 'العميل';
+    const clientName = clientCard ? clientCard.getAttribute('data-client-name') : 'العميل';
     
     const deleteModalText = document.getElementById('deleteClientModalText');
-    if (deleteModalText) deleteModalText.innerText = `هل تريد حذف العميل ${clientName} ؟`;
+    if (deleteModalText) deleteModalText.innerText = `هل تريد بالتأكيد حذف العميل "${clientName}"؟`;
+
+    const deleteForm = document.getElementById('deleteClientForm');
+    if (deleteForm && deleteUrl) deleteForm.action = deleteUrl;
 
     const modalEl = document.getElementById('deleteClientModal');
     if (modalEl) {
@@ -301,17 +266,6 @@ function openDeleteClientModal(button) {
         deleteModal.show();
     }
 }
-
-function confirmDeleteClient() {
-    const deleteModalEl = document.getElementById('deleteClientModal');
-    if (deleteModalEl) {
-        const deleteModalInstance = bootstrap.Modal.getInstance(deleteModalEl);
-        if (deleteModalInstance) deleteModalInstance.hide();
-    }
-    
-    showStatusMessage("تم حذف العميل بنجاح");
-}
-
 /* ==========================================
    Login Page JS
 ========================================== */

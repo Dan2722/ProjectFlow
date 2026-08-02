@@ -1,6 +1,32 @@
+
+@font-face {
+    font-family: 'Lama Sans';
+    src: url('../fonts/LamaSans-Regular.ttf') format('truetype'); /* عدل المسار حسب مكان الملف عندك */
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Lama Sans';
+    src: url('../fonts/LamaSans-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Lama Sans';
+    src: url('../fonts/LamaSans-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+
+
+
 /* إعداد الخط العام للواجهة */
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Lama Sans', system-ui, -apple-system, sans-serif;
+    font-weight: 400; /* Regular */
     background-color: #FFFFFF;
     margin: 0;
     padding: 0;
@@ -16,8 +42,8 @@ body {
 }
 
 .welcome-text {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 20px; /* تصغير حجم الخط ليكون مريحاً للعين */
     color: #000000;
 }
@@ -60,8 +86,8 @@ body {
 }
 
 .navigation-sidebar .nav-link {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600; 
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 15px !important; /* تصغير حجم الخط من 18 إلى 15 */
     color: #000000;
     padding: 8px 12px !important; /* تقليل المسافة الداخلية بين العناصر */
@@ -99,8 +125,8 @@ body {
     color: #dc3545 !important;
     border-radius: 20px;
     padding: 6px 16px !important;
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 14px !important;
     background-color: #FFFFFF !important;
     box-shadow: none !important;
@@ -122,8 +148,8 @@ body {
    تنسيق المهام (Task Style)
 ========================================== */
 .task-page-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 700; /* Bold/Medium */
     font-size: 18px;
     color: #000000;
 }
@@ -135,8 +161,8 @@ body {
     background-color: #8A84AD !important;
     color: #FFFFFF !important;
     border-radius: 10px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 14px;
     padding: 8px 16px;
     border: none !important;
@@ -144,8 +170,8 @@ body {
 }
 
 .Task-Style .status-title {
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 300; /* Thin */
     font-size: 20px;
     color: #000000;
 }
@@ -194,22 +220,22 @@ body {
 }
 
 .task-name {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 13px;
     color: #000000;
 }
 
 .project-name {
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 300; /* Thin */
     font-size: 13px;
     color: #000000;
 }
 
 .end-date {
-    font-family: 'Inter', sans-serif;
-    font-weight: 300;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 300; /* Thin */
     font-size: 10px;
     color: #000000;
 }
@@ -244,8 +270,8 @@ body {
 }
 
 .custom-label {
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 400; /* Regular */
     font-size: 14px;
     color: #2B2B2B;
 }
@@ -268,7 +294,7 @@ body {
     border-radius: 25px;
     padding: 10px 45px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500; /* Medium */
     border: none !important;
     box-shadow: none !important;
 }
@@ -289,7 +315,7 @@ body {
     border-radius: 25px;
     padding: 8px 36px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500; /* Medium */
     border: none !important;
     box-shadow: none !important;
 }
@@ -304,7 +330,7 @@ body {
     border-radius: 25px;
     padding: 8px 36px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500; /* Medium */
     border: none !important;
     box-shadow: none !important;
 }
@@ -325,7 +351,7 @@ body {
     border-radius: 25px;
     padding: 8px 45px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500; /* Medium */
     border: none !important;
     box-shadow: none !important;
 }
@@ -358,7 +384,7 @@ body {
 ========================================== */
 
 .total-clients-card {
-    width: 170px;            /* عرض مصغّر ومتناسق */
+    width: 170px;          /* عرض مصغّر ومتناسق */
     padding: 10px 12px;      /* حشوة داخلية مدمجة */
     background-color: #FFFFFF;
     border: 1px solid #F0EDF5;
@@ -373,8 +399,8 @@ body {
 
 /* الرقم 3 (مصغّر) */
 .total-clients-card .count-number {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;        /* Inter Medium */
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500;        /* Inter Medium -> Lama Sans Medium */
     font-size: 22px;        /* تم تصغير الرقم ليصبح ناعماً ومتناسقاً */
     color: #000000;
     line-height: 1;
@@ -382,8 +408,8 @@ body {
 
 /* كلمة اجمالي العملاء والأيقونة */
 .total-clients-card .label-text {
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;        /* Inter Regular */
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 400;        /* Inter Regular -> Lama Sans Regular */
     font-size: 15px;        /* تم تصغير النص ليناسب الحجم الجديد */
     color: #000000;
     
@@ -412,8 +438,8 @@ body {
 }
 
 .client-name {
-    font-family: 'Inter', sans-serif;
-    font-weight: 600;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 16px;
     color: #000000;
 }
@@ -469,7 +495,7 @@ body {
 ========================================== */
 .custom-label {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500; /* Medium */
     color: #333333;
     display: block;
     text-align: right;
@@ -633,7 +659,7 @@ SETTING CSS CODE */
     justify-content: center; /* يتوسط الكارد */
     gap: 6px;                /* مسافة بسيطة بين النص والأيقونة */
     font-size: 0.825rem;
-    font-weight: 600;
+    font-weight: 500; /* Medium */
     color: #334155;
 }
 
@@ -767,8 +793,8 @@ SETTING CSS CODE */
     background-color: #8A84AD !important;
     color: #FFFFFF !important;
     border-radius: 20px;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
+    font-family: 'Lama Sans', sans-serif;
+    font-weight: 500; /* Medium */
     font-size: 14px;
     padding: 8px 22px;
     border: none !important;
@@ -865,7 +891,7 @@ SETTING CSS CODE */
 }
 
 .flex-grow-1.overflow-auto::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #8A84AD;
     border-radius: 10px;
 }
 

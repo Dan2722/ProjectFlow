@@ -243,50 +243,17 @@ function openDeleteModal(button) {
         modalInstance.show();
     }
 }
-/* ==========================================
-   إدارة التعليقات (Comments Operations)
-========================================== */
-function prepareAddComment(formId) {
-    const commentForm = document.getElementById(formId);
-    if (commentForm) {
-        commentForm.reset();
-    }
-}
-
-function openEditCommentModal(commentId, currentContent, updateUrl) {
-    const commentInput = document.getElementById('editCommentInput');
-    const commentForm = document.getElementById('editCommentForm');
-
-    if (commentInput) commentInput.value = currentContent;
-    if (commentForm && updateUrl) commentForm.action = updateUrl;
-
-    const modalEl = document.getElementById('editCommentModal');
-    if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    }
-}
-
-function openDeleteCommentModal(deleteUrl) {
-    const deleteForm = document.getElementById('deleteCommentForm');
-    if (deleteForm && deleteUrl) deleteForm.action = deleteUrl;
-
-    const modalEl = document.getElementById('deleteCommentModal');
-    if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    }
-}
 
 /* ==========================================
-   إدارة العملاء
+    إدارة العملاء (Clients Management)
 ========================================== */
+
 function prepareAddClientModal(storeUrl) {
     const modalTitle = document.getElementById('clientModalTitle');
     const clientForm = document.getElementById('clientForm');
     const methodInput = document.getElementById('clientFormMethod');
 
-    if (modalTitle) modalTitle.innerText = "إضافة عميل";
+    if (modalTitle) modalTitle.innerText = "إضافة عميل جديد";
     if (clientForm) {
         clientForm.reset();
         if (storeUrl) clientForm.action = storeUrl;
@@ -333,7 +300,9 @@ function openDeleteClientModal(button, deleteUrl) {
     if (deleteModalText) deleteModalText.innerText = `هل تريد بالتأكيد حذف العميل "${clientName}"؟`;
 
     const deleteForm = document.getElementById('deleteClientForm');
-    if (deleteForm && deleteUrl) deleteForm.action = deleteUrl;
+    if (deleteForm && deleteUrl) {
+        deleteForm.action = deleteUrl;
+    }
 
     const modalEl = document.getElementById('deleteClientModal');
     if (modalEl) {
@@ -341,6 +310,20 @@ function openDeleteClientModal(button, deleteUrl) {
         deleteModal.show();
     }
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.sessionSuccessMessage) {
+        const successModalEl = document.getElementById('successModal');
+        const successTextEl = document.getElementById('successModalText');
+        if (successModalEl) {
+            if (successTextEl) {
+                successTextEl.innerText = window.sessionSuccessMessage;
+            }
+            const successModal = new bootstrap.Modal(successModalEl);
+            successModal.show();
+        }
+    }
+});
 
 /* ==========================================
    Login Page JS
@@ -463,26 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-/* ==========================================
-   دالة عرض رسائل النجاح والتنبيه الموحدة
-========================================== */
-function showStatusMessage(message) {
-    const messageElement = document.getElementById('statusModalMessage');
-    if (messageElement) {
-        messageElement.innerText = message;
-    }
-    
-    const modalEl = document.getElementById('statusMessageModal');
-    if (modalEl) {
-        const existingModal = bootstrap.Modal.getInstance(modalEl);
-        if (existingModal) {
-            existingModal.hide();
-        }
-        
-        const statusModal = new bootstrap.Modal(modalEl);
-        statusModal.show();
-    }
-}
+
 
 /* ==========================================
    إدارة الملف الشخصي
@@ -556,29 +520,110 @@ function confirmDeleteAccount() {
     
     showStatusMessage("تم حذف الحساب بنجاح");
 }
+/* ==========================================
+   إعدادات اللغة والترجمة
+========================================== */
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. تفعيل زر الإشعارات وإرسال التحديث لقاعدة البيانات
+    const emailNotifToggle = document.getElementById('emailNotifToggle');
+    if (emailNotifToggle) {
+        emailNotifToggle.addEventListener('change', function() {
+            const isChecked = this.checked;
+
+            fetch(window.settingsRoutes.notifications, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({ email_notifications: isChecked })
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatusMessage(data.message || "تم تحديث إعدادات الإشعارات بنجاح");
+                } else {
+                    alert(data.message || 'حدث خطأ أثناء تحديث الإشعارات.');
+                    emailNotifToggle.checked = !isChecked; // إرجاع الزر للحالة السابقة عند الخطأ
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال بالخادم.');
+                emailNotifToggle.checked = !isChecked;
+            });
+        });
+    }
+
+    // 2. نموذج تغيير كلمة المرور والتحقق منها وإرسالها للسيرفر
+    const passwordChangeForm = document.getElementById('passwordChangeForm');
+    const confirmPass = document.getElementById('confirmPassInput');
+
+    if (confirmPass) {
+        confirmPass.addEventListener('input', () => {
+            confirmPass.setCustomValidity('');
+        });
+    }
+
+    if (passwordChangeForm) {
+        passwordChangeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const currentPass = document.getElementById('currentPassInput').value.trim();
+            const newPass = document.getElementById('newPassInput').value.trim();
+            const confirmPassInput = document.getElementById('confirmPassInput');
+            const confirmPassValue = confirmPassInput.value.trim();
+
+            if (newPass !== confirmPassValue) {
+                const currentLang = localStorage.getItem('preferredLang') || 'ar';
+                const errorMsg = currentLang === 'en' 
+                    ? 'Passwords do not match.' 
+                    : 'كلمتا المرور غير متطابقتين.';
+
+                confirmPassInput.setCustomValidity(errorMsg);
+                confirmPassInput.reportValidity();
+                return;
+            }
+
+            // إرسال الطلب للسيرفر لتغيير كلمة المرور بشكل حقيقي
+            fetch(window.settingsRoutes.passwordUpdate, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({
+                    current_password: currentPass,
+                    new_password: newPass,
+                    new_password_confirmation: confirmPassValue
+                })
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatusMessage(data.message || "تم تحديث كلمة المرور بنجاح");
+                    passwordChangeForm.reset();
+                } else {
+                    alert(data.message || 'حدث خطأ أثناء تحديث كلمة المرور.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال بالخادم.');
+            });
+        });
+    }
+
+    // تحميل لغة الواجهة المحفوظة
+    const savedLang = localStorage.getItem('preferredLang') || 'ar';
+    changeLanguage(savedLang);
+});
 
 /* ==========================================
    إعدادات اللغة والترجمة
 ========================================== */
 const translations = {
     ar: {
-        pageTitle: "الاعدادات",
-        navHome: "الصفحة الرئيسية",
-        navProjects: "المشاريع",
-        navTasks: "المهام",
-        navClients: "العملاء",
-        navSettings: "الاعدادت",
-        navLogout: "تسجيل خروج",
-        welcomeMessage: "مرحبا دان!",
-        notificationsTitle: "الإشعارات",
-        notificationsNew: "إشعارين جديدين",
-        notif1Title: "تحديث المشروع الجديد",
-        notif1Time: "منذ 5 دقايق",
-        notif1Desc: "تم اضافة مهام جديدة في مشروع نظرة الحلول المستقبل.",
-        notif2Title: "تنبيه النظام",
-        notif2Time: "منذ ساعة",
-        notif2Desc: "تم تحديث كلمة المرور بنجاح.",
-        noMoreNotif: "لا توجد إشعارات أخرى",
         settingsPageHeader: "الاعدادات",
         settingsPageSub: "إدارة تفضيلاتك وحسابك الشخصي",
         notificationsHeading: "الاشعارات",
@@ -592,28 +637,9 @@ const translations = {
         currentPassLabel: "كلمة المرور الحالية",
         newPassLabel: "كلمة المرور الجديدة",
         confirmPassLabel: "تأكيد كلمة المرور الجديدة",
-        updatePassBtn: "تحديث كلمة المرور",
-        okBtn: "حسناً",
-        passSuccessMsg: "تم تحديث كلمة المرور بنجاح"
+        updatePassBtn: "تحديث كلمة المرور"
     },
     en: {
-        pageTitle: "Settings",
-        navHome: "Home",
-        navProjects: "Projects",
-        navTasks: "Tasks",
-        navClients: "Clients",
-        navSettings: "Settings",
-        navLogout: "Logout",
-        welcomeMessage: "Welcome Dan!",
-        notificationsTitle: "Notifications",
-        notificationsNew: "2 New Notifications",
-        notif1Title: "New Project Update",
-        notif1Time: "5 mins ago",
-        notif1Desc: "New tasks have been added to Future Solutions project.",
-        notif2Title: "System Alert",
-        notif2Time: "1 hour ago",
-        notif2Desc: "Password updated successfully.",
-        noMoreNotif: "No more notifications",
         settingsPageHeader: "Settings",
         settingsPageSub: "Manage your preferences and personal account",
         notificationsHeading: "Notifications",
@@ -627,16 +653,14 @@ const translations = {
         currentPassLabel: "Current Password",
         newPassLabel: "New Password",
         confirmPassLabel: "Confirm New Password",
-        updatePassBtn: "Update Password",
-        okBtn: "OK",
-        passSuccessMsg: "Password updated successfully"
+        updatePassBtn: "Update Password"
     }
 };
 
 function changeLanguage(lang) {
     localStorage.setItem('preferredLang', lang);
 
-    const htmlRoot = document.getElementById('htmlRoot');
+    const htmlRoot = document.documentElement; // استبدل بـ document.documentElement لضمان الوصول لجذر الصفحة
     const bootstrapCSS = document.getElementById('bootstrapCSS');
     const langBadge = document.getElementById('currentLangBadge');
 
@@ -684,52 +708,26 @@ function updateActiveLanguageButtons(lang) {
     }
 }
 
-function handlePasswordChange(event) {
-    event.preventDefault();
-
-    const currentPass = document.getElementById('currentPassInput');
-    const newPass = document.getElementById('newPassInput');
-    const confirmPass = document.getElementById('confirmPassInput');
-
-    if (!newPass || !confirmPass) return;
-
-    confirmPass.setCustomValidity('');
-
-    const newPassValue = newPass.value.trim();
-    const confirmPassValue = confirmPass.value.trim();
-
-    if (newPassValue !== confirmPassValue) {
-        const currentLang = localStorage.getItem('preferredLang') || 'ar';
-        const errorMsg = currentLang === 'en' 
-            ? 'Passwords do not match.' 
-            : 'كلمتا المرور غير متطابقتين.';
-
-        confirmPass.setCustomValidity(errorMsg);
-        confirmPass.reportValidity();
-        return;
+/* ==========================================
+   دالة عرض رسائل النجاح والتنبيه الموحدة
+========================================== */
+function showStatusMessage(message) {
+    const messageElement = document.getElementById('statusModalMessage');
+    if (messageElement) {
+        messageElement.innerText = message;
     }
-
-    const statusModalEl = document.getElementById('statusMessageModal');
-    if (statusModalEl) {
-        const modalInstance = new bootstrap.Modal(statusModalEl);
-        modalInstance.show();
+    
+    const modalEl = document.getElementById('statusMessageModal');
+    if (modalEl) {
+        const existingModal = bootstrap.Modal.getInstance(modalEl);
+        if (existingModal) {
+            existingModal.hide();
+        }
+        
+        const statusModal = new bootstrap.Modal(modalEl);
+        statusModal.show();
     }
-
-    const form = document.getElementById('passwordChangeForm');
-    if (form) form.reset();
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const confirmPass = document.getElementById('confirmPassInput');
-    if (confirmPass) {
-        confirmPass.addEventListener('input', () => {
-            confirmPass.setCustomValidity('');
-        });
-    }
-
-    const savedLang = localStorage.getItem('preferredLang') || 'ar';
-    changeLanguage(savedLang);
-});
 
 // js notification
 function markNotificationsAsRead() {
@@ -793,4 +791,136 @@ function updateProjectDatesLimits() {
         endDateInput.removeAttribute('min');
         endDateInput.removeAttribute('max');
     }
+}
+
+/* ==========================================
+    إدارة التعليقات (Comments Operations - Backend)
+========================================== */
+
+let attachedFiles = [];
+const MAX_ATTACHMENTS = 3; // الحد الأقصى المسموح به إجمالاً (ملفات أو صور)
+
+function prepareAddComment(formId) {
+    const commentForm = document.getElementById(formId);
+    if (commentForm) {
+        commentForm.reset();
+        attachedFiles = [];
+        renderAttachmentsPreview();
+    }
+}
+
+function openEditCommentModal(commentId, currentContent, updateUrl) {
+    const commentInput = document.getElementById('editCommentInput');
+    const commentForm = document.getElementById('editCommentForm');
+
+    if (commentInput) commentInput.value = currentContent;
+    if (commentForm && updateUrl) commentForm.action = updateUrl;
+
+    const modalEl = document.getElementById('editCommentModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function openDeleteCommentModal(deleteUrl) {
+    const deleteForm = document.getElementById('deleteCommentForm');
+    if (deleteForm && deleteUrl) deleteForm.action = deleteUrl;
+
+    const modalEl = document.getElementById('deleteCommentModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    
+    if (attachedFiles.length + files.length > MAX_ATTACHMENTS) {
+        const textInput = document.getElementById('commentTextInput');
+        if (textInput) {
+            textInput.setCustomValidity(`تنبيه: الحد الأقصى المسموح به للإرفاق هو ${MAX_ATTACHMENTS} عناصر فقط (صور أو ملفات).`);
+            textInput.reportValidity();
+            textInput.oninput = function() { this.setCustomValidity(''); };
+        }
+        event.target.value = '';
+        return;
+    }
+
+    files.forEach(file => {
+        attachedFiles.push({ type: 'file', file: file });
+    });
+    renderAttachmentsPreview();
+    event.target.value = '';
+}
+
+function handleImageSelect(event) {
+    const files = Array.from(event.target.files);
+    
+    if (attachedFiles.length + files.length > MAX_ATTACHMENTS) {
+        const textInput = document.getElementById('commentTextInput');
+        if (textInput) {
+            textInput.setCustomValidity(`تنبيه: الحد الأقصى المسموح به للإرفاق هو ${MAX_ATTACHMENTS} عناصر فقط (صور أو ملفات).`);
+            textInput.reportValidity();
+            textInput.oninput = function() { this.setCustomValidity(''); };
+        }
+        event.target.value = '';
+        return;
+    }
+
+    files.forEach(file => {
+        attachedFiles.push({ type: 'image', file: file });
+    });
+    renderAttachmentsPreview();
+    event.target.value = '';
+}
+
+function removeAttachment(index) {
+    attachedFiles.splice(index, 1);
+    renderAttachmentsPreview();
+}
+
+function renderAttachmentsPreview() {
+    const previewContainer = document.getElementById('attachmentsPreview');
+    if (!previewContainer) return;
+
+    previewContainer.innerHTML = '';
+    attachedFiles.forEach((item, index) => {
+        const badge = document.createElement('div');
+        badge.className = 'badge bg-light text-dark border d-flex align-items-center gap-2 p-2 rounded-3';
+        const icon = item.type === 'image' ? 'fa-regular fa-image' : 'fa-solid fa-paperclip';
+        badge.innerHTML = `
+            <i class="${icon}" style="color: #8A84AD;"></i>
+            <span class="small">${item.file.name}</span>
+            <i class="fa-solid fa-xmark text-danger cursor-pointer ms-1" onclick="removeAttachment(${index})"></i>
+        `;
+        previewContainer.appendChild(badge);
+    });
+}
+
+function handleCommentSubmit(event) {
+    const textInput = document.getElementById('commentTextInput');
+    const commentText = textInput ? textInput.value.trim() : '';
+
+    // التحقق من أن التعليق أو الملفات ليست فارغة تماماً
+    if (!commentText && attachedFiles.length === 0) {
+        event.preventDefault();
+        if (textInput) {
+            textInput.setCustomValidity("يرجى كتابة تعليق أو إدراج ملفات/صور قبل الإرسال.");
+            textInput.reportValidity();
+            textInput.oninput = function() { this.setCustomValidity(''); };
+        }
+        return false;
+    }
+
+    // نقل الملف المرفق من المصفوفة إلى حقل الـ File المخفي في الفورم
+    if (attachedFiles.length > 0) {
+        const fileInput = document.getElementById('attachmentInput');
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(attachedFiles[0].file);
+        fileInput.files = dataTransfer.files;
+    }
+
+    return true; // السماح بإرسال الفورم بالشكل الطبيعي
 }

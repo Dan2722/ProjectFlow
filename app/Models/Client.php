@@ -12,13 +12,18 @@ class Client extends Model
     protected $primaryKey = 'client_id';
 
 
-    protected $fillable = ['phone', 'company_name', 'user_id'];
+    protected $fillable = [
+    'user_id',
+    'name',
+    'company_name',
+    'email',
+    'phone',
+    'project_name',
+];
 
       public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
-
 }
-
 

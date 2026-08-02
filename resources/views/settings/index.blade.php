@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 @section('title', 'الاعدادات')
 @section('content-class', 'p-4 flex-grow-1')
@@ -29,7 +28,7 @@
     <div class="d-flex align-items-center justify-content-between p-3 mb-3 border rounded-4" style="background-color: #FAF9FB;">
         <span class="fw-semibold" data-i18n="toggleEmailNotif" style="font-size: 14px; color: #000000;">تفعيل إشعارات البريد</span>
         <div class="form-check form-switch m-0">
-            <input class="form-check-input custom-toggle" id="emailNotifToggle" role="switch" style="cursor: pointer; width: 45px; height: 22px;" type="checkbox" {{ auth()->user()->email_notifications ? 'checked' : '' }} onchange="toggleEmailNotifications(this)"/>
+            <input class="form-check-input custom-toggle" id="emailNotifToggle" role="switch" style="cursor: pointer; width: 45px; height: 22px;" type="checkbox" {{ auth()->user()->email_notifications ? 'checked' : '' }} />
         </div>
     </div>
 
@@ -65,9 +64,8 @@
         </div>
     </div>
 
-
-<!-- نموذج تغيير كلمة المرور -->
-    <form id="passwordChangeForm" onsubmit="handleBackendPasswordChange(event)">
+    <!-- نموذج تغيير كلمة المرور -->
+    <form id="passwordChangeForm">
         @csrf
         <div class="d-flex flex-column gap-3">
             <div>
@@ -108,38 +106,14 @@
 </div>
 @endpush
 
-
 @push('scripts')
+<!-- تمرير الراوتس المتغيرة كـ Global Variables لاستخدامها في الملف الخارجي -->
 <script>
-// دالة حفظ حالة الإشعارات في قاعدة البيانات
-function toggleEmailNotifications(checkbox) {
-    const isChecked = checkbox.checked;
-    
-    fetch("{{ route('settings.notifications') }}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ⠵⠞⠺⠟⠞⠵⠵⠵⠵⠵⠵⠟⠞⠺⠟⠞⠟⠞⠵⠟⠟⠵⠟⠞⠵⠵⠺⠞⠟⠟⠞⠟⠟⠞⠺⠟⠞⠞⠟⠞⠵⠟⠟⠟⠺⠞⠟⠟⠵⠵⠵⠞⠺⠟⠺⠟⠺⠟⠵⠺⠵⠵⠟⠵⠞⠟⠺⠟⠟⠟⠺⠺⠞⠺⠵⠞⠵⠟⠵⠺⠟⠺⠞⠞⠵⠟⠺⠞⠵⠺⠺⠺⠟⠵⠞⠵⠵⠺⠵⠟⠟⠵⠵⠺⠵⠟⠺⠺⠞⠺⠵⠵⠺⠟⠞⠵⠵⠞⠟⠟⠵⠺⠞⠺⠵⠺⠟⠞⠺⠞⠞⠺⠵⠺⠵⠺⠵⠟⠵⠞⠞⠟⠟⠞⠵⠟⠵⠵⠞⠟⠺⠺⠟⠵⠞⠟⠟⠞⠺⠟⠺⠵⠺⠵⠟⠵⠟⠞⠵⠺⠵⠵⠵⠺⠵⠵⠞⠞⠵⠵⠞⠵⠞⠺⠵⠟⠺⠞⠞⠞⠵⠞⠟⠟⠵⠟⠺⠵⠞⠟⠟⠵⠞⠵⠵⠞⠵⠺⠞⠺⠺⠞⠟⠟⠺⠞⠺⠵⠺⠵⠟⠟⠺⠺⠺⠞⠞⠵⠺⠺⠞⠵⠞⠞⠺⠺⠺⠟⠵⠟⠵⠞⠺⠞⠺⠵⠟⠞⠞⠵⠟⠟⠵⠵⠞⠟⠺⠵⠟⠺⠺⠺⠞⠟⠟⠺⠵⠵⠵⠵⠵⠵⠞⠵⠺⠺⠺⠟⠵⠵⠵⠵⠺⠞⠟⠵⠵⠺⠟⠺⠺⠞⠵⠵⠟⠞⠞⠟⠞⠞⠵⠞⠵⠟⠟⠵⠟⠞⠟⠺⠺⠺⠵⠺⠺⠞⠺⠞⠵⠟⠺⠺⠟⠟⠟⠟⠟⠵⠺⠺⠵⠺⠟⠟⠞⠞⠺⠺⠞⠺⠵⠞⠺⠺⠺⠟⠵⠵⠞⠟⠺⠞⠵⠟⠺⠵⠺⠺⠞⠞⠺⠵⠵⠟⠺⠟⠵⠺⠞⠟⠵⠟⠟⠟⠞⠞⠟⠺⠺⠺⠟⠺⠵⠵⠟⠵⠵⠟⠟⠟⠵⠟⠵⠺⠟⠞⠵⠺⠺⠺⠞⠞⠞⠞⠟⠟⠞⠵⠺⠞⠞⠞⠞⠵⠟⠟⠵⠺⠺⠟⠺⠵⠞⠞⠞⠺⠵⠺⠟⠺⠞⠵⠟⠺⠟⠺⠟⠺⠺⠵⠺⠟⠺⠵⠞⠺⠞⠺⠺⠞⠺⠺⠟⠞⠟⠵⠞⠟⠵⠵⠞⠟⠞⠺⠟⠵⠟⠟⠵⠵⠵⠟⠵⠟⠺⠟⠵⠺⠞⠞⠞⠟⠞⠵⠞⠵⠞⠟⠟⠟⠟⠵⠵⠞⠵⠵⠞⠵⠟⠵⠺⠺⠵⠺⠵⠺⠟⠺⠞⠞⠞⠺⠺⠟⠵⠟⠵⠟⠵⠵⠞⠞⠵⠺⠞⠞⠟⠵⠟⠟⠞⠟⠟⠵⠞⠟⠟⠵⠵⠞⠵⠺⠵⠞⠵⠞⠞⠺⠺⠺⠞⠟⠟⠞⠞⠺⠵⠟⠞⠺⠟⠞⠞⠺⠟⠟⠵⠟⠺⠞⠞⠞⠵⠺⠺⠵⠺⠵⠵⠺⠺⠵⠵⠞⠞⠞⠵⠵⠺⠵⠞⠺⠞⠞⠞⠵⠞⠟⠟⠞⠺⠺⠞⠞⠺⠞⠞⠵⠵⠺⠞⠺⠞⠺⠟⠞⠵⠵⠺⠞⠞⠺⠺⠟⠞⠟⠵⠵⠞⠺⠵⠟⠟⠺⠞⠺⠟⠺⠞⠺⠟⠞⠵⠞⠟⠺⠟⠺⠺⠞⠟⠞⠟⠺⠺⠵⠵⠟⠺⠺⠵⠟⠞⠟⠟⠺⠺⠺⠵⠺⠺⠟⠺⠵⠞⠵⠟⠞⠵⠞⠵⠵⠵⠺⠵⠵⠺⠟⠺⠟⠞⠟⠟⠞⠺⠟⠟⠟⠵⠺⠟⠟⠵⠞⠺⠞⠵⠺⠵⠵⠵⠞⠵⠺⠟⠵⠟⠟⠞⠺⠺⠵⠞⠞⠟⠟⠵⠺⠵⠺⠵⠵⠺⠵⠺⠟⠟⠟⠵⠵⠟⠵⠟⠺⠞⠟⠵⠟⠟⠺⠞⠺⠞⠞⠺⠺⠵⠵⠞⠺⠵⠵⠟⠟⠺⠵⠞⠟⠞⠵⠵⠟⠺⠞⠟⠟⠞⠺⠞⠺⠵⠺⠵⠞⠺⠞⠞⠺⠞⠵⠵⠺⠟⠵⠞⠟⠺⠟⠺⠟⠟⠟⠞⠞⠞⠺⠞⠞⠺⠞⠟⠵⠵⠵⠟⠟⠺⠞⠞⠞⠺⠞⠞⠵⠵⠵⠟⠵⠟⠞⠺⠟⠞⠟⠞⠟⠵⠵⠟⠵⠞⠺⠞⠺⠵⠟⠟⠵⠵⠺⠺⠵⠟⠺⠟⠞⠺⠞⠵⠞⠟⠺⠵⠟⠞⠺⠵⠟⠞⠺⠵⠟⠺⠟⠟⠵⠟⠟⠺⠺⠟⠟⠺⠺⠵⠞⠵⠞⠵⠺⠺⠞⠞⠞⠞⠺⠺⠵⠺⠺⠞⠺⠺⠵⠺⠟⠺⠵⠺⠞⠵⠵⠟⠺⠵⠺⠞⠵⠞⠞⠟⠺⠵⠟⠺⠞⠞⠺⠺⠺⠞⠟⠵⠟⠵⠞⠺⠟⠞⠟⠺⠺⠞⠞⠵⠵⠟⠟⠞⠞⠺⠟⠵⠞⠟⠟⠞⠞⠺⠟⠟⠵⠞⠟⠺⠺⠟⠟⠞⠵⠵⠵⠞⠞⠺⠟⠺⠺⠺⠟⠵⠟⠞⠞⠟⠟⠺⠟⠞⠺⠟⠟⠟⠺ '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            current_password: currentPass,
-            new_password: newPass,
-            new_password_confirmation: confirmPass
-        })
-    })
-    .then(async response => {
-        const data = await response.json();
-        if (response.ok && data.success) {
-            showStatusMessage(data.message);
-            document.getElementById('passwordChangeForm').reset();
-        } else {
-            alert(data.message || 'حدث خطأ أثناء تحديث كلمة المرور.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('حدث خطأ في الاتصال بالخادم.');
-    });
-}
+    window.settingsRoutes = {
+        notifications: "{{ route('settings.notifications') }}",
+        passwordUpdate: "{{ route('settings.password.update') }}" // ضع مسار راوت تحديث الباسورد لديك
+    };
 </script>
+<!-- استدعاء ملف الجافاسكريفت الخارجي -->
+<script src="{{ asset('js/main.js') }}"></script>
 @endpush

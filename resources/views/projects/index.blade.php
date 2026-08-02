@@ -11,15 +11,6 @@
     </button>
 </div>
 
-<!-- رسائل النجاح من السيرفر -->
-@if(session('success'))
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            showStatusMessage("{{ session('success') }}");
-        });
-    </script>
-@endif
-
 <!-- حاوية كروت المشاريع الديناميكية -->
 <div class="projects-scroll-container">
     <div class="row g-4" id="projectsGrid">
@@ -57,20 +48,17 @@
                         </div>
                     </div>
 
-                   <!-- عرض اسم الشركة على اليمين والمهام على اليسار -->
-<div class="d-flex align-items-center justify-content-between text-muted extra-small mb-3">
-    <!-- اليمين: اسم الشركة والأيقونة -->
-    <div class="d-flex align-items-center gap-1">
-        <i class="fa-regular fa-building"></i>
-        <span>{{ $project->company_name ? $project->company_name : 'غير محدد' }}</span>
-    </div>
-
-    <!-- اليسار: عدد المهام والأيقونة -->
-    <div class="d-flex align-items-center gap-1">
-        <i class="fa-solid fa-list-check"></i>
-        <span>{{ $project->tasks_count ?? ($project->tasks ? $project->tasks->count() : 0) }} مهام</span>
-    </div>
-</div>
+                    <!-- عرض اسم الشركة والمهام -->
+                    <div class="d-flex align-items-center justify-content-between text-muted extra-small mb-3">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fa-regular fa-building"></i>
+                            <span>{{ $project->company_name ? $project->company_name : 'غير محدد' }}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>{{ $project->tasks_count ?? ($project->tasks ? $project->tasks->count() : 0) }} مهام</span>
+                        </div>
+                    </div>
 
                     <hr class="my-2 text-muted opacity-25"/>
                     <div class="d-flex align-items-center justify-content-between text-muted extra-small pt-1">
@@ -108,39 +96,32 @@
                     @csrf
                     <input type="hidden" name="_method" id="projectFormMethod" value="POST">
                     
-                    <!-- اسم المشروع -->
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">اسم المشروع <span class="text-danger">*</span></label>
                         <input class="form-control custom-input text-end" id="projectNameInput" name="project_name" required type="text"/>
                     </div>
 
-                    <!-- اسم الشركة / العميل -->
-                  
-<div class="mb-3 text-end">
-    <label class="custom-label mb-1">اسم الشركة  <span class="text-danger">*</span></label>
-    <input class="form-control custom-input text-end" id="projectCompanyNameInput" name="company_name" required type="text" placeholder="أدخلي اسم الشركة أو العميل"/>
-</div>
+                    <div class="mb-3 text-end">
+                        <label class="custom-label mb-1">اسم الشركة <span class="text-danger">*</span></label>
+                        <input class="form-control custom-input text-end" id="projectCompanyNameInput" name="company_name" required type="text" placeholder="أدخلي اسم الشركة أو العميل"/>
+                    </div>
 
-                    <!-- الوصف -->
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">الوصف <span class="text-danger">*</span></label>
                         <textarea class="form-control custom-input text-end" id="projectDescInput" name="project_description" rows="2" required></textarea>
                     </div>
 
-                  <!-- التواريخ -->
-<div class="row g-2 mb-3">
-    <div class="col-6 text-end">
-        <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
-        <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" min="{{ date('Y-m-d') }}"/>
-    </div>
-    <div class="col-6 text-end">
-        <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
-        <!-- أضفنا min هنا أيضاً لتاريخ الانتهاء -->
-        <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date" min="{{ date('Y-m-d') }}"/>
-    </div>
-</div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6 text-end">
+                            <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
+                            <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date"/>
+                        </div>
+                        <div class="col-6 text-end">
+                            <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
+                            <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date"/>
+                        </div>
+                    </div>
 
-                    <!-- الحالة -->
                     <div class="mb-4 text-end">
                         <label class="custom-label mb-1">الحالة <span class="text-danger">*</span></label>
                         <select class="form-select custom-input text-center" id="projectStatusSelect" name="status" required>
@@ -152,7 +133,6 @@
                         </select>
                     </div>
 
-                    <!-- زر الحفظ -->
                     <div class="text-center pt-2">
                         <button class="btn btn-save" type="submit">حفظ المشروع</button>
                     </div>
@@ -162,7 +142,7 @@
     </div>
 </div>
 
-<!-- 2. مودال تأكيد الحذف -->
+<!-- 2. مودال تأكيد الحذف للمشروع -->
 <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal p-4 text-center">
@@ -172,25 +152,10 @@
                     @csrf
                     @method('DELETE')
                     <div class="d-flex justify-content-center gap-3">
-                        <button type="submit" class="btn btn-delete-confirm"> حذف</button>
+                        <button type="submit" class="btn btn-delete-confirm">حذف</button>
                         <button type="button" class="btn btn-delete-cancel" data-bs-dismiss="modal">إلغاء</button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 3. مودال التنبيهات والرسائل الموحد -->
-<div class="modal fade" id="statusMessageModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content custom-modal p-4 text-center">
-            <div class="modal-body p-0">
-                <div class="mb-3">
-                    <i class="fa-regular fa-circle-check status-success-icon"></i>
-                </div>
-                <h4 class="fw-bold mb-3" id="statusModalMessage">تمت العملية بنجاح</h4>
-                <button type="button" class="btn btn-status-ok" data-bs-dismiss="modal">حسناً</button>
             </div>
         </div>
     </div>

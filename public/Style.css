@@ -558,9 +558,11 @@ body {
 
 /* تخصيص الـ Scrolling لقائمة العملاء ليطابق تصميم المهام */
 .clients-container-scroll {
-    max-height: 480px !important;
-    overflow-y: auto !important;
-    overscroll-behavior-y: contain;
+    overflow-x: hidden !important; /* يمنع ظهور الشريط السفلي نهائياً */
+}
+
+#clientsList {
+    margin: 0 !important; /* يمنع العناصر من الخروج عن حدود الصفحة وتوليد شريط */
 }
 
 .clients-container-scroll::-webkit-scrollbar {

@@ -95,20 +95,5 @@
     </div>
 </div>
 
-<!-- مودال رسائل النجاح -->
-@if(session('success'))
-<div aria-hidden="true" class="modal fade show d-block" id="statusMessageModal" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content custom-modal text-center p-4">
-            <div class="mb-3">
-                <i class="fa-solid fa-circle-check status-success-icon"></i>
-            </div>
-            <p class="delete-text mb-4 fw-bold">{{ session('success') }}</p>
-            <div class="d-flex justify-content-center">
-                <button class="btn btn-status-ok" onclick="this.closest('.modal').remove()" type="button">حسناً</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
+
 @endpush

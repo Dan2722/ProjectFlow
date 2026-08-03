@@ -21,26 +21,20 @@ class ProfileController extends Controller
     /**
      * تحديث بيانات الملف الشخصي
      */
-    public function update(Request $request)
+public function update(Request $request)
 {
-    $user = Auth::user();
-
-    // 1. التحقق من صحة البيانات (الاسم والإيميل إجباري، الجوال والشركة اختياري)
     $request->validate([
         'username'     => 'required|string|max:255',
-        'email'        => 'required|email|unique:users,email,' . $user->user_id . ',user_id',
-        'phone'        => ['nullable', 'regex:/^05[0-9]{8}$/'], // صارت اختيارية nullable
-        'company_name' => 'nullable|string|max:255',         // صارت اختيارية nullable
-    ], [
-        'phone.regex'  => 'يجب أن يبدأ رقم الجوال بـ 05 ويتكون من 10 أرقام في حال إدخاله',
-        'email.unique' => 'البريد الإلكتروني مُستخدم بالفعل',
+        // استبدلي كلمة 'user_id' في النهاية باسم عمود الـ ID الفعلي في جدول الـ users لديك
+        'email'        => 'required|email|max:255|unique:users,email,' . auth()->id() . ',user_id',
+        'phone'        => 'nullable|string|max:20',
+        'company_name' => 'nullable|string|max:255',
     ]);
 
-    // 2. تحديث جدول users
-    $user->update([
+    auth()->user()->update([
         'username'     => $request->username,
         'email'        => $request->email,
-        'phone'        => $request->phone,
+        'phone'        => $phone = $request->phone, // أو الحقل الخاص بك
         'company_name' => $request->company_name,
     ]);
 

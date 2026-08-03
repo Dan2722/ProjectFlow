@@ -755,44 +755,49 @@ function markNotificationsAsRead() {
 
 // js "tasks faield "
 function updateProjectDatesLimits() {
-    const projectSelect = document.getElementById('projectIdInput');
-    const startDateInput = document.getElementById('startDateInput');
-    const endDateInput = document.getElementById('endDateInput');
-    const companyInput = document.getElementById('companyNameInput'); // حقل اسم الشركة في النموذج
-
-    if (!projectSelect) return;
-
-    const selectedOption = projectSelect.options[projectSelect.selectedIndex];
-    
-    // جلب التواريخ واسم الشركة بالأسماء الصحيحة المطابقة لقاعدة البيانات
-    const projectStart = selectedOption.getAttribute('data-start');
-    const projectEnd = selectedOption.getAttribute('data-end');
-    const companyName = selectedOption.getAttribute('data-company');
-
-    // تعبئة حقل اسم الشركة تلقائياً بمجرد اختيار المشروع (إذا كان موجوداً بالنموذج)
-    if (companyInput && companyName) {
-        companyInput.value = companyName;
-    }
-
-    if (!startDateInput || !endDateInput) return;
-
-    if (projectStart && projectEnd && projectStart !== "" && projectEnd !== "") {
-        const minDate = projectStart.split('T')[0];
-        const maxDate = projectEnd.split('T')[0];
-
-        startDateInput.min = minDate;
-        startDateInput.max = maxDate;
+        const projectSelect = document.getElementById('projectIdInput');
+        const selectedOption = projectSelect.options[projectSelect.selectedIndex];
         
-        endDateInput.min = minDate;
-        endDateInput.max = maxDate;
-    } else {
-        startDateInput.removeAttribute('min');
-        startDateInput.removeAttribute('max');
-        endDateInput.removeAttribute('min');
-        endDateInput.removeAttribute('max');
-    }
-}
+        const startDateInput = document.getElementById('startDateInput');
+        const endDateInput = document.getElementById('endDateInput');
 
+        if (selectedOption && selectedOption.value) {
+            const projectStart = selectedOption.getAttribute('data-start');
+            const projectEnd = selectedOption.getAttribute('data-end');
+
+            // تحديد أقل وأقصى تاريخ مسموح به لحقل البدء والانتهاء بناءً على المشروع
+            startDateInput.min = projectStart;
+            startDateInput.max = projectEnd;
+
+            endDateInput.min = projectStart;
+            endDateInput.max = projectEnd;
+
+            // تفريغ الحقول عند تغيير المشروع لتجنب بقاء تواريخ قديمة غير متوافقة
+            startDateInput.value = '';
+            endDateInput.value = '';
+        } else {
+            startDateInput.value = '';
+            endDateInput.value = '';
+            startDateInput.min = '';
+            startDateInput.max = '';
+            endDateInput.min = '';
+            endDateInput.max = '';
+        }
+    }
+
+    // ربط تاريخ انتهاء المهمة بحيث لا يقل عن تاريخ بدء المهمة المحدد
+    document.getElementById('startDateInput').addEventListener('change', function() {
+        const startDate = this.value;
+        const endDateInput = document.getElementById('endDateInput');
+        
+        if (startDate) {
+            // الحد الأدنى لتاريخ الانتهاء يصبح هو نفس تاريخ البدء المختار للمهمة
+            endDateInput.min = startDate;
+            if (endDateInput.value && endDateInput.value < startDate) {
+                endDateInput.value = startDate;
+            }
+        }
+    });
 /* ==========================================
     إدارة التعليقات (Comments Operations - Backend)
 ========================================== */

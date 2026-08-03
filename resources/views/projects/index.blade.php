@@ -112,15 +112,15 @@
                     </div>
 
                     <div class="row g-2 mb-3">
-                        <div class="col-6 text-end">
-                            <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
-                            <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date"/>
-                        </div>
-                        <div class="col-6 text-end">
-                            <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
-                            <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date"/>
-                        </div>
-                    </div>
+    <div class="col-6 text-end">
+        <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
+        <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" min="{{ date('Y-m-d') }}"/>
+    </div>
+    <div class="col-6 text-end">
+        <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
+        <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date" min="{{ date('Y-m-d') }}"/>
+    </div>
+</div>
 
                     <div class="mb-4 text-end">
                         <label class="custom-label mb-1">الحالة <span class="text-danger">*</span></label>

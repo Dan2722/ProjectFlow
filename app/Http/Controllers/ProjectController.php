@@ -22,7 +22,7 @@ class ProjectController extends Controller
             'project_name'        => 'required|string|max:255',
             'company_name'        => 'required|string|max:255',
             'project_description' => 'required|string',
-            'start_project'       => 'required|date',
+            'start_project'       => 'required|date|after_or_equal:today',
             'end_project'         => 'required|date|after_or_equal:start_project',
             'status'              => 'required|string',
         ]);
@@ -37,12 +37,12 @@ class ProjectController extends Controller
             'user_id'             => auth()->id(),
         ]);
 
-        // إشعار الإضافة
+        // إشعار إضافة المشروع مع اسم المشروع
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'إضافة مشروع',
                 'تم إضافة مشروع جديد: ' . $project->project_name,
-                route('projects.index')
+                route('projects.show', $project->project_id)
             ));
         }
 
@@ -63,7 +63,7 @@ class ProjectController extends Controller
             'project_name'        => 'required|string|max:255',
             'company_name'        => 'required|string|max:255',
             'project_description' => 'required|string',
-            'start_project'       => 'required|date',
+            'start_project'       => 'required|date|after_or_equal:today',
             'end_project'         => 'required|date|after_or_equal:start_project',
             'status'              => 'required|string',
         ]);
@@ -79,12 +79,12 @@ class ProjectController extends Controller
             'status'              => $request->status,
         ]);
 
-        // إشعار التعديل
+        // إشعار التعديل مع اسم المشروع
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'تعديل مشروع',
                 'تم تعديل بيانات المشروع: ' . $project->project_name,
-                route('projects.index')
+                route('projects.show', $project->project_id)
             ));
         }
 
@@ -99,11 +99,11 @@ class ProjectController extends Controller
 
         $project->delete();
 
-        // إشعار الحذف
+        // إشعار الحذف مع اسم المشروع
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'حذف مشروع',
-                'تم حذف المشروع بنجاح: ' . $projectName,
+                'تم حذف المشروع: ' . $projectName,
                 route('projects.index')
             ));
         }

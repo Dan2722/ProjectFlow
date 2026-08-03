@@ -25,9 +25,10 @@
 
 /* إعداد الخط العام للواجهة */
 body {
-    font-family: 'Lama Sans', system-ui, -apple-system, sans-serif;
-    font-weight: 400; /* Regular */
+    font-family: 'Lama Sans';
+    font-weight:600 ; /* medium */
     background-color: #FFFFFF;
+    font-size: 36;
     margin: 0;
     padding: 0;
 }

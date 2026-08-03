@@ -47,30 +47,30 @@
 </nav>
 
 <!-- عنوان الصفحة -->
-<h1 class="fw-bold mb-4" id="pageMainTitle" style="font-size: 26px; color: #000000;">المشاريع</h1>
+<h1 class="task-page-title" id="pageMainTitle">المشاريع</h1>
 
 @php
-    // مصفوفة خريطة الأيقونات الموحدة لكل الحالات (تُستخدم للمشروع والمهام)
+    // مصفوفة خريطة الأيقونات الموحدة لكل الحالات (مطابقة تماماً لصفحة المهام)
     $statusIconsMap = [
-        'قيد التنفيذ'  => 'fa-solid fa-users-gear',
-        'قيد المراجعة' => 'fa-regular fa-clipboard',
-        'متوقف مؤقتا'  => 'fa-regular fa-circle-stop',
-        'متوقف مؤقتاً' => 'fa-regular fa-circle-stop',
-        'قيد الانتظار' => 'fa-solid fa-bars-staggered',
-        'مكتملة'       => 'fa-regular fa-circle-check'
+        'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
+        'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard', 'class' => ''],
+        'مكتملة'       => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
+        'متوقف مؤقتا'  => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''],
+        'متوقف مؤقتاً' => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''],
+        'قيد الانتظار' => ['icon' => 'fa-solid fa-list-check', 'class' => '']
     ];
 
-    // تحديد أيقونة المشروع الرئيسي بناءً على حالته (مع وضع أيقونة افتراضية في حال كانت الحالة غير متطابقة)
+    // تحديد أيقونة المشروع الرئيسي بناءً على حالته
     $projectStatus = $project->status ?? 'قيد التنفيذ';
-    $projectStatusIcon = $statusIconsMap[$projectStatus] ?? 'fa-solid fa-users-gear';
+    $projectStatusMeta = $statusIconsMap[$projectStatus] ?? ['icon' => 'fa-regular fa-id-badge', 'class' => ''];
 @endphp
 
-<!-- كارد المشروع الرئيسي (مع الأيقونة المتغيرة ديناميكياً بحسب حالة المشروع) -->
+<!-- كارد المشروع الرئيسي -->
 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" style="border: 1px solid #EFEEF3 !important;">
     <div class="row align-items-center">
         <div class="col-lg-8">
             <div class="d-flex align-items-center gap-2 mb-2">
-                <h2 class="fw-bold m-0" id="cardProjTitle" style="font-size: 18px; color: #000000;">{{ $project->project_name }}</h2>
+                <h3 class="project-card-title m-0" id="cardProjTitle">{{ $project->project_name }}</h3>
                 <span class="text-muted" id="companyName" style="font-size: 13px;">{{ $project->company_name ?? 'غير محدد' }}</span>
             </div>
             <p class="text-secondary mb-3" id="projDesc" style="font-size: 13px; line-height: 1.6;">
@@ -95,8 +95,7 @@
             <div class="d-flex align-items-center justify-content-lg-end gap-2 mb-2">
                 <div class="d-flex align-items-center gap-2" style="color: #000000; font-size: 14px; font-weight: 400;">
                     <span id="statusInProgress">{{ $projectStatus }}</span>
-                    <!-- الأيقونة تتغير تلقائياً حسب حالة المشروع -->
-                    <i class="{{ $projectStatusIcon }}" style="font-size: 16px; color: #8A84AD;"></i>
+                    <i class="{{ $projectStatusMeta['icon'] }} {{ $projectStatusMeta['class'] }}" style="font-size: 16px; color: #8A84AD;"></i>
                 </div>
             </div>
             <div class="mt-3">
@@ -112,49 +111,46 @@
     </div>
 </div>
 
-<!-- شبكة كاردات الحالات (الأعمدة الخمسة مع أيقوناتها الثابتة لكل عمود) -->
+<!-- شبكة أعمدة الحالات (مطابقة تماماً لتنسيق اسم الحالة والأيقونة في صفحة المهام) -->
 @php
     $statuses = [
-        'قيد التنفيذ'  => ['icon' => 'fa-solid fa-users-gear'],
-        'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard'],
-        'متوقف مؤقتا'  => ['icon' => 'fa-regular fa-circle-stop'],
-        'قيد الانتظار' => ['icon' => 'fa-solid fa-bars-staggered'],
-        'مكتملة'       => ['icon' => 'fa-regular fa-circle-check']
+        'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
+        'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard', 'class' => ''],
+        'مكتملة'       => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
+        'متوقف مؤقتا'  => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''],
+        'قيد الانتظار' => ['icon' => 'fa-solid fa-list-check', 'class' => '']
     ];
 @endphp
 
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     @foreach($statuses as $statusName => $statusMeta)
         @php
-            $statusTasks = $project->tasks->where('status', $statusName);
-            $tasksCount = $statusTasks->count();
+            $filteredTasks = $project->tasks->where('status', $statusName);
+            $tasksCount = $filteredTasks->count();
         @endphp
 
         <div class="col">
             <div class="card border rounded-4 p-3 bg-white shadow-sm d-flex flex-column" style="border-color: #EFEEF3 !important; height: 440px;">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold" style="font-size: 15px; color: #000000;">{{ $statusName }}</span>
-                        <i class="{{ $statusMeta['icon'] }}" style="color: #8A84AD; font-size: 15px;"></i>
-                    </div>
-                    <span class="badge rounded-pill bg-light text-secondary px-2 py-1" style="font-size: 11px;">
-                        {{ $tasksCount }} {{ $tasksCount == 1 ? 'مهمة' : 'مهام' }}
-                    </span>
+                <!-- رأس العمود (مطابق تماماً لتنسيق صفحة المهام) -->
+                <div class="status-header d-flex align-items-center justify-content-start gap-2 mb-3">
+                    <span class="status-title">{{ $statusName }}</span>
+                    <i class="{{ $statusMeta['icon'] }} status-icon status-success-icon {{ $statusMeta['class'] }} ms-auto" style="color: #8A84AD;"></i>
                 </div>
+
                 <div class="flex-grow-1 overflow-auto pe-1" style="max-height: 350px;">
                     <div class="d-flex flex-column gap-3">
-                        @forelse($statusTasks as $task)
+                        @forelse($filteredTasks as $task)
                             <div class="card border rounded-3 p-3 bg-white task-card d-flex flex-column justify-content-between shadow-xs" 
-                                 style="border-color: #EFEEF3 !important;"
-                                 data-task-id="{{ $task->task_id }}" 
-                                 data-task-title="{{ $task->task_title }}"
-                                 data-project-id="{{ $task->project_id }}"
-                                 data-assigned-to="{{ $task->assigned_to }}"
-                                 data-description="{{ $task->task_description }}"
-                                 data-start-date="{{ $task->start_task }}"
-                                 data-end-date="{{ $task->end_task }}"
-                                 data-status="{{ $task->status }}"
-                                 data-company-name="{{ optional($task->project)->company_name }}">
+                                   style="border-color: #EFEEF3 !important;"
+                                   data-task-id="{{ $task->task_id }}" 
+                                   data-task-title="{{ $task->task_title }}"
+                                   data-project-id="{{ $task->project_id }}"
+                                   data-assigned-to="{{ $task->assigned_to }}"
+                                   data-description="{{ $task->task_description }}"
+                                   data-start-date="{{ $task->start_task }}"
+                                   data-end-date="{{ $task->end_task }}"
+                                   data-status="{{ $task->status }}"
+                                   data-company-name="{{ optional($task->project)->company_name }}">
                                 
                                 <div>
                                     <a class="fw-bold task-name text-decoration-none text-dark" href="{{ route('tasks.show', $task->task_id) }}" style="font-size: 14px;">

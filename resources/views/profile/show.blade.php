@@ -5,7 +5,7 @@
 @section('content')
 <!-- عنوان الصفحة -->
 <div class="mb-3">
-    <h2 class="fw-bold m-0" style="font-size: 22px; color: #000000;">الملف الشخصي</h2>
+    <h2 class="task-page-title" >الملف الشخصي</h2>
     <p class="text-muted m-0" style="font-size: 14px;">معلوماتي الشخصية</p>
 </div>
 
@@ -48,7 +48,7 @@
                 @enderror
             </div>
 
-        <div class="w-75">
+            <div class="w-75">
                 <label class="form-label custom-label mb-1">رقم الجوال</label>
                 <input class="form-control custom-input @error('phone') is-invalid @enderror" dir="ltr" name="phone" pattern="^05[0-9]{8}$" placeholder="05xxxxxxxx" title="يجب أن يبدأ رقم الجوال بـ 05 ويتكون من 10 أرقام" type="tel" value="{{ old('phone', $user->phone ?? '') }}"/>
                 @error('phone')
@@ -56,7 +56,6 @@
                 @enderror
             </div>
 
-         
             <div class="w-75">
                 <label class="form-label custom-label mb-1">الشركة</label>
                 <input class="form-control custom-input @error('company_name') is-invalid @enderror" name="company_name" type="text" value="{{ old('company_name', $user->company_name ?? '') }}"/>
@@ -82,18 +81,18 @@
 <div aria-hidden="true" class="modal fade" id="deleteAccountModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal text-center p-4">
-            <p class="delete-text mb-4 fw-bold">هل تريد حذف الحساب نهائياً؟</p>
-            <form action="{{ route('profile.destroy') }}" method="POST">
-                @csrf
-                @method('DELETE')
-                <div class="d-flex justify-content-center gap-3">
-                    <button class="btn btn-delete-confirm" type="submit">حذف</button>
-                    <button class="btn btn-delete-cancel" data-bs-dismiss="modal" type="button">إلغاء</button>
-                </div>
-            </form>
+            <div class="modal-body p-0">
+                <p class="delete-text mb-4">هل تريد حذف الحساب نهائياً؟</p>
+                <form action="{{ route('profile.destroy') }}" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="btn btn-delete-confirm" type="submit">حذف</button>
+                        <button class="btn btn-delete-cancel" data-bs-dismiss="modal" type="button">إلغاء</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
-
-
 @endpush

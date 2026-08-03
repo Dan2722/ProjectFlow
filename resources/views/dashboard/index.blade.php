@@ -87,9 +87,10 @@
         </div>
     </div>
 </div>
+
 <!-- قسم المشاريع الأخيرة -->
 <div class="recent-projects-section mt-4" dir="rtl">
-    <h2 class="page-title mb-3 ">المشاريع الأخيرة</h2>
+    <h2 class="task-page-title mb-3 ">المشاريع الأخيرة</h2>
     
     <div class="recent-projects-container p-3 p-md-4">
         <div class="d-flex flex-column gap-3 recent-projects-scroll">
@@ -98,6 +99,16 @@
                     $totalProjectTasks = $project->tasks->count();
                     $completedProjectTasks = $project->tasks->where('status', 'مكتملة')->count();
                     $progressPercentage = $totalProjectTasks > 0 ? round(($completedProjectTasks / $totalProjectTasks) * 100) : 0;
+                    
+                    // تحديد كلاس البادج بناءً على حالة المشروع
+                    $statusClass = match($project->project_status) {
+                        'مكتملة' => 'badge-completed',
+                        'قيد المراجعة' => 'badge-review',
+                        'قيد التنفيذ' => 'badge-in-progress',
+                        'قيد الانتظار' => 'badge-pending',
+                        'متوقف مؤقتاً', 'متوقف مؤقتا' => 'badge-paused',
+                        default => 'badge-in-progress'
+                    };
                 @endphp
                 <div class="project-item-card p-3">
                     
@@ -107,18 +118,19 @@
                             <h3 class="fw-bold fs-6 mb-1 text-dark">{{ $project->project_name }}</h3>
                             <div class="text-muted small">{{ $project->company_name ?? 'مشروع خاص' }}</div>
                         </div>
-                        <span class="badge badge-in-progress">{{ $project->project_status }}</span>
+                        {{-- حالة المشروع الديناميكية --}}
+                        <span class="badge {{ $statusClass }}">{{ $project->project_status }}</span>
                     </div>
 
                     <!-- السطر الثاني: معلومات المهام والتاريخ يمين + شريط التقدم والنسبة يسار -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-2">
-                        <!-- جهة اليمين: المهام وتاريخ الانتهاء -->
+                        <!-- جهة اليمين: المهام وتاريخ الانتهاء بالعربي -->
                         <div class="d-flex align-items-center gap-3">
                             <div class="fw-bold small text-dark">
                                 المهام {{ $completedProjectTasks }}/{{ $totalProjectTasks }}
                             </div>
                             <div class="text-muted small">
-                                تاريخ الانتهاء : {{ $project->end_project ? \Carbon\Carbon::parse($project->end_project)->format('d F Y') : 'غير محدد' }}
+                                تاريخ الانتهاء : {{ $project->end_project ? \Carbon\Carbon::parse($project->end_project)->locale('ar')->translatedFormat('d F Y') : 'غير محدد' }}
                             </div>
                         </div>
 
@@ -144,4 +156,3 @@
     </div>
 </div>
 @endsection
-

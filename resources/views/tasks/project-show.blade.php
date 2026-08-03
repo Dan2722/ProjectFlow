@@ -12,7 +12,7 @@
 </div>
 
 <!-- عنوان الصفحة -->
-<h3 class="fw-bold mb-4 text-start fs-5" style="color: #2b2b2b;">المهام</h3>
+<h3 class="task-page-title";">المهام</h3>
 
 <!-- Task Details Main Header Card -->
 <div class="card custom-task-card p-4 mb-4 bg-white">
@@ -48,7 +48,7 @@
 <div class="card border border-light-subtle rounded-4 p-4 shadow-sm">
     <div class="d-flex align-items-center gap-2 mb-3">
         <i class="fa-regular fa-comment fs-4" style="color: #8A84AD;"></i>
-        <h5 class="fw-bold m-0">التعليقات</h5>
+        <h5 class="task-page-title">التعليقات</h5>
         <span class="badge rounded-circle text-dark bg-light border ms-1" id="commentsCountBadge">
             {{ isset($task->comments) ? $task->comments->count() : 0 }}
         </span>

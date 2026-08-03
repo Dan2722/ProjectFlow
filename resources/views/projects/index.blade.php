@@ -5,7 +5,7 @@
 @section('content')
 <!-- رأس الصفحة: العنوان وزر الإضافة -->
 <div class="d-flex align-items-center justify-content-between mb-4">
-    <h2 class="page-title m-0">المشاريع</h2>
+    <h2 class="task-page-title m-0">المشاريع</h2>
     <button class="btn btn-add-project px-4 py-2" onclick="prepareAddProjectModal('{{ route('projects.store') }}')" type="button">
         مشروع جديد +
     </button>

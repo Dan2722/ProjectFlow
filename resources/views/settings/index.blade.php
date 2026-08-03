@@ -5,7 +5,7 @@
 @section('content')
 <!-- عنوان الصفحة -->
 <div class="mb-4" dir="rtl">
-    <h2 class="fw-bold m-0" data-i18n="settingsPageHeader" style="font-size: 22px; color: #000000;">الاعدادات</h2>
+    <h2 class="task-page-title" data-i18n="settingsPageHeader">الاعدادات</h2>
     <p class="text-muted m-0" data-i18n="settingsPageSub" style="font-size: 14px;">إدارة تفضيلاتك وحسابك الشخصي</p>
 </div>
 

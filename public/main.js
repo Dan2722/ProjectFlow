@@ -131,9 +131,8 @@ function openDeleteProjectModal(button, deleteUrl) {
         deleteModal.show();
     }
 }
-/* ==========================================
-    إدارة عمليات المهام (عرض والتحكم بالـ Modals)
-========================================== */
+
+/* js task page */
 function validateDates() {
     const startDateInput = document.getElementById('startDateInput');
     const endDateInput = document.getElementById('endDateInput');
@@ -179,7 +178,7 @@ function openEditModal(button) {
     const status = taskCard.getAttribute('data-status') || '';
     
     // إذا كنتِ تخزنين اسم الشركة داخل الـ Task Card أو تجلبينه عبر المشروع
-    const companyName = taskCard.getAttribute('data-company-name') || '';
+    const companyName = taskCard.getAttribute('data-company') || '';
 
     const modalTitle = document.getElementById('taskModalTitle');
     const taskForm = document.getElementById('taskForm');
@@ -244,10 +243,7 @@ function openDeleteModal(button) {
     }
 }
 
-/* ==========================================
-    إدارة العملاء (Clients Management)
-========================================== */
-
+/* js Client  */
 function prepareAddClientModal(storeUrl) {
     const modalTitle = document.getElementById('clientModalTitle');
     const clientForm = document.getElementById('clientForm');

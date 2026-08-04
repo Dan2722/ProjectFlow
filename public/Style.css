@@ -28,6 +28,7 @@
 }
 
 
+
 body {
     font-family: 'Lama Sans', system-ui, -apple-system, sans-serif;
     font-weight: 400; /* Regular */
@@ -255,7 +256,7 @@ body {
 #deleteModal .modal-dialog,
 #deleteClientModal .modal-dialog,
 #statusMessageModal .modal-dialog {
-    max-width: 460px !important;
+    max-width: 380px !important;
     margin: auto !important;
 }
 
@@ -296,6 +297,8 @@ body {
     line-height: 1.5;
     font-weight: 400; /* Regular */
 }
+
+
 /* btn ( delete - حذف )*/
 .btn-delete-confirm,
 .btn-delete-confirm:hover,
@@ -310,6 +313,57 @@ body {
     border: none !important;
     box-shadow: none !important;
 }
+
+
+/* 1. ضبط نص الرسالة ليكون مثل .delete-text تماماً */
+#statusMessageModal .modal-body,
+#successModal .modal-body,
+#statusModalMessage,
+#successModalText {
+    font-family: 'Lama Sans', sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    color: #1A1A1A !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+}
+
+/* 2. تصغير الدائرة الخضراء والأيقونة لتناسب حجم النص (42px) */
+/* تصغير الدائرة والأيقونة بصرياً مع الحفاظ على أبعادها الداخلية */
+#statusMessageModal .modal-body img,
+#statusMessageModal .modal-body svg,
+#statusMessageModal .modal-body i,
+#statusMessageModal .modal-body div,
+#statusMessageModal .swal2-icon,
+#successModal .modal-body img,
+#successModal .modal-body svg,
+#successModal .modal-body i,
+#successModal .modal-body div,
+#successModal .swal2-icon {
+    transform: scale(0.5) !important;          /* تصغير الأيقونة بنسبة 50% */
+    transform-origin: center center !important;  /* الحفاظ على التوسيط */
+    margin-top: -15px !important;               /* إلغاء الفراغات الزائدة بعد التصغير */
+    margin-bottom: -25px !important;
+}
+
+/* 3. تصغير حجم خلفية زر (حسناً) والخط ليكون متناسقاً مع الرسالة */
+#statusMessageModal .btn-status-ok,
+#successModal .btn-status-ok,
+.btn-status-ok {
+    background-color: #8A84AD !important;
+    color: #FFFFFF !important;
+    font-family: 'Lama Sans', sans-serif !important;
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    padding: 5px 22px !important;       /* حشو أصغر يعطي حجماً ملموماً للخلفية البنفسجية */
+    border-radius: 16px !important;     /* انحناء متناسق مع الحجم الجديد */
+    border: none !important;
+    width: auto !important;
+    min-width: 85px !important;         /* يمنع الزر من التمدد بشكل ضخم */
+    display: inline-block !important;
+    margin-top: 15px !important;
+}
+
 
 /* btn (cancle - الغاء )*/
 .btn-delete-cancel,
@@ -326,20 +380,7 @@ body {
     box-shadow: none !important;
 }
 
-/* btn (ok -حسنا)*/
-.btn-status-ok,
-.btn-status-ok:hover,
-.btn-status-ok:active,
-.btn-status-ok:focus {
-    background-color: #8A84AD !important;
-    color: #FFFFFF !important;
-    border-radius: 25px;
-    padding: 8px 45px;
-    font-size: 16px;
-    font-weight: 500; /* Medium */
-    border: none !important;
-    box-shadow: none !important;
-}
+
 
 .Task-Style {
     display: grid !important;

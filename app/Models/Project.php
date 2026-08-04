@@ -31,4 +31,10 @@ class Project extends Model
     {
         return $this->hasMany(Task::class, 'project_id', 'project_id');
     }
+    public function client() {
+    return $this->belongsTo(User::class, 'client_id');
+}
+public function employee() {
+    return $this->belongsTo(Employee::class, 'employee_id'); // أو الموظف المسؤول
+}
 }

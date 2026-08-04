@@ -37,19 +37,24 @@
                             <span class="badge-project-status my-1">{{ $project->status }}</span>
                             <p class="project-card-desc mb-0">{{ $project->project_description }}</p>
                         </div>
-                        @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+                        
                         <div class="d-flex align-items-center gap-1">
-                            <!-- زر التعديل -->
-                            <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل" onclick="openEditProjectModal(this, '{{ route('projects.update', $project->project_id) }}')">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </button>
-                            
-                            <!-- زر الحذف -->
-                            <button class="btn-icon text-muted border-0 bg-transparent p-0 ms-1" title="حذف" onclick="openDeleteProjectModal(this, '{{ route('projects.destroy', $project->project_id) }}')">
-                                <i class="fa-regular fa-trash-can"></i>
-                            </button>
+                            @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+                                <!-- زر التعديل الشامل للأدمن -->
+                                <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل" onclick="openEditProjectModal(this, '{{ route('projects.update', $project->project_id) }}')">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                                <!-- زر الحذف للأدمن -->
+                                <button class="btn-icon text-muted border-0 bg-transparent p-0 ms-1" title="حذف" onclick="openDeleteProjectModal(this, '{{ route('projects.destroy', $project->project_id) }}')">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            @else
+                                <!-- زر تعديل الحالة للموظف -->
+                                <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل حالة المشروع" onclick="openEmployeeProjectStatusModal('{{ $project->project_id }}', '{{ $project->status }}', '{{ route('projects.update', $project->project_id) }}')">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                            @endif
                         </div>
-                        @endif
                     </div>
 
                     <!-- عرض اسم الشركة والمهام -->
@@ -88,7 +93,7 @@
 
 @push('modals')
 @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
-<!-- 1. مودال إضافة وتعديل مشروع -->
+<!-- 1. مودال إضافة وتعديل مشروع (للأدمن) -->
 <div aria-hidden="true" class="modal fade" id="projectModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal p-4">
@@ -147,7 +152,7 @@
     </div>
 </div>
 
-<!-- 2. مودال تأكيد الحذف للمشروع -->
+<!-- 2. مودال تأكيد الحذف للمشروع (للأدمن) -->
 <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content custom-modal p-4 text-center">
@@ -166,4 +171,48 @@
     </div>
 </div>
 @endif
+
+<!-- مودال خاص بالموظف لتعديل حالة المشروع فقط -->
+<div aria-hidden="true" class="modal fade" id="employeeProjectStatusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="modal-title m-0" style="font-size: 18px; font-weight: 700;">تعديل حالة المشروع</h3>
+                <button aria-label="Close" class="btn-close m-0" data-bs-dismiss="modal" type="button"></button>
+            </div>
+            <div class="modal-body p-0">
+                <form id="employeeProjectStatusForm" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="mb-4 text-end">
+                        <label class="custom-label mb-1">حالة المشروع <span class="text-danger">*</span></label>
+                        <select class="form-select custom-input text-center" id="employeeProjectStatusSelect" name="status" required>
+                            <option value="قيد التنفيذ">قيد التنفيذ</option>
+                            <option value="قيد المراجعة">قيد المراجعة</option>
+                            <option value="قيد الانتظار">قيد الانتظار</option>
+                            <option value="متوقف مؤقتاً">متوقف مؤقتاً</option>
+                            <option value="مكتملة">مكتملة</option>
+                        </select>
+                    </div>
+                    <div class="text-center pt-2">
+                        <button class="btn btn-save" type="submit">تحديث الحالة</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endpush
+
+@push('scripts')
+<script>
+    function openEmployeeProjectStatusModal(projectId, currentStatus, updateUrl) {
+        const form = document.getElementById('employeeProjectStatusForm');
+        form.action = updateUrl;
+        document.getElementById('employeeProjectStatusSelect').value = currentStatus;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('employeeProjectStatusModal'));
+        myModal.show();
+    }
+</script>
 @endpush

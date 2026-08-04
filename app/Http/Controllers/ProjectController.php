@@ -18,6 +18,11 @@ class ProjectController extends Controller
     // حفظ مشروع جديد
     public function store(Request $request)
     {
+        // حماية: الموظف ممنوع من إضافة المشاريع
+        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+            abort(403, 'عذراً، لا تمتلك صلاحية إضافة مشاريع.');
+        }
+
         $request->validate([
             'project_name'        => 'required|string|max:255',
             'company_name'        => 'required|string|max:255',
@@ -59,6 +64,30 @@ class ProjectController extends Controller
     // تحديث بيانات مشروع
     public function update(Request $request, $id)
     {
+        $project = Project::findOrFail($id);
+
+        // إذا كان المستخدم هو الموظف، نسمح له بتحديث "الحالة" فقط ونمنع تعديل باقي البيانات
+        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+            $request->validate([
+                'status' => 'required|string',
+            ]);
+
+            $project->update([
+                'status' => $request->status,
+            ]);
+
+            if (auth()->check()) {
+                auth()->user()->notify(new SystemActivityNotification(
+                    'تعديل حالة مشروع',
+                    'تم تحديث حالة المشروع: ' . $project->project_name,
+                    route('projects.show', $project->project_id)
+                ));
+            }
+
+            return redirect()->back()->with('success', 'تم تحديث حالة المشروع بنجاح');
+        }
+
+        // للأدمن: التحقق والتعديل الكامل لكافة الحقول
         $request->validate([
             'project_name'        => 'required|string|max:255',
             'company_name'        => 'required|string|max:255',
@@ -67,8 +96,6 @@ class ProjectController extends Controller
             'end_project'         => 'required|date|after_or_equal:start_project',
             'status'              => 'required|string',
         ]);
-
-        $project = Project::findOrFail($id);
 
         $project->update([
             'project_name'        => $request->project_name,
@@ -94,6 +121,11 @@ class ProjectController extends Controller
     // حذف مشروع
     public function destroy($id)
     {
+        // حماية: الموظف ممنوع من حذف المشاريع
+        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+            abort(403, 'عذراً، لا تمتلك صلاحية حذف المشاريع.');
+        }
+
         $project = Project::findOrFail($id);
         $projectName = $project->project_name;
 

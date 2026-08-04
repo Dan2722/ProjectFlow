@@ -6,9 +6,11 @@
 <!-- رأس الصفحة: العنوان وزر الإضافة -->
 <div class="d-flex align-items-center justify-content-between mb-4">
     <h2 class="task-page-title m-0">المشاريع</h2>
+    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
     <button class="btn btn-add-project px-4 py-2" onclick="prepareAddProjectModal('{{ route('projects.store') }}')" type="button">
         مشروع جديد +
     </button>
+    @endif
 </div>
 
 <!-- حاوية كروت المشاريع الديناميكية -->
@@ -35,6 +37,7 @@
                             <span class="badge-project-status my-1">{{ $project->status }}</span>
                             <p class="project-card-desc mb-0">{{ $project->project_description }}</p>
                         </div>
+                        @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
                         <div class="d-flex align-items-center gap-1">
                             <!-- زر التعديل -->
                             <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل" onclick="openEditProjectModal(this, '{{ route('projects.update', $project->project_id) }}')">
@@ -46,6 +49,7 @@
                                 <i class="fa-regular fa-trash-can"></i>
                             </button>
                         </div>
+                        @endif
                     </div>
 
                     <!-- عرض اسم الشركة والمهام -->
@@ -75,7 +79,7 @@
             </div>
         @empty
             <div class="col-12 text-center py-5">
-                <p class="text-muted">لا توجد مشاريع مضافة حالياً. اضغطي على "مشروع جديد" للبدء!</p>
+                <p class="text-muted">لا توجد مشاريع مضافة حالياً.</p>
             </div>
         @endforelse
     </div>
@@ -83,6 +87,7 @@
 @endsection
 
 @push('modals')
+@if(auth()->user()->email !== 'empLayan@fvs.com.sa')
 <!-- 1. مودال إضافة وتعديل مشروع -->
 <div aria-hidden="true" class="modal fade" id="projectModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -112,15 +117,15 @@
                     </div>
 
                     <div class="row g-2 mb-3">
-    <div class="col-6 text-end">
-        <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
-        <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" min="{{ date('Y-m-d') }}"/>
-    </div>
-    <div class="col-6 text-end">
-        <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
-        <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date" min="{{ date('Y-m-d') }}"/>
-    </div>
-</div>
+                        <div class="col-6 text-end">
+                            <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
+                            <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" min="{{ date('Y-m-d') }}"/>
+                        </div>
+                        <div class="col-6 text-end">
+                            <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
+                            <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date" min="{{ date('Y-m-d') }}"/>
+                        </div>
+                    </div>
 
                     <div class="mb-4 text-end">
                         <label class="custom-label mb-1">الحالة <span class="text-danger">*</span></label>
@@ -160,4 +165,5 @@
         </div>
     </div>
 </div>
+@endif
 @endpush

@@ -3,49 +3,68 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
-use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Notifications\SystemActivityNotification;
 
 class CommentController extends Controller
 {
-    public function store(Request $request, $taskId)
+    public function store(Request $request, $task_id)
     {
         $request->validate([
             'comment_text' => 'nullable|string',
-            'attachment'   => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,zip,fig|max:2048',
+            'attachment'   => 'nullable|file|mimes:pdf,doc,docx,zip,fig|max:10240',
+            'image'        => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10240',
         ]);
-
-        if (empty($request->comment_text) && !$request->hasFile('attachment')) {
-            return redirect()->back()->withErrors(['comment_text' => 'يرجى كتابة تعليق أو إدراج ملفات/صور قبل الإرسال.']);
-        }
-
-        $path = null;
-        if ($request->hasFile('attachment')) {
-            $path = $request->file('attachment')->store('attachments', 'public');
-        }
 
         $userId = auth()->check() ? auth()->id() : null;
 
-        Comment::create([
-            'comment_text' => $request->comment_text ?? '', 
-            'attachment'   => $path,
-            'task_id'      => $taskId,
-            'user_id'      => $userId,
-        ]);
-
-        // جلب المهمة لدمج اسمها داخل الإشعار
-        $task = Task::where('task_id', $taskId)->first();
-        $taskTitle = $task ? $task->task_title : 'المهمة';
-
-        if (auth()->check()) {
-            auth()->user()->notify(new SystemActivityNotification(
-                'تعليق جديد',
-                'تم إضافة تعليق جديد على المهمة: ' . $taskTitle,
-                route('tasks.show', $taskId)
-            ));
+        if (empty($request->comment_text) && !$request->hasFile('attachment') && !$request->hasFile('image')) {
+            return back()->withErrors(['comment_text' => 'يجب كتابة تعليق أو إرفاق ملف أو صورة.']);
         }
 
-        return redirect()->back()->with('success', 'تمت إضافة التعليق بنجاح!');
+        // إذا تم إرفاق ملف
+        if ($request->hasFile('attachment')) {
+            $pathFile = $request->file('attachment')->store('comments', 'public');
+            Comment::create([
+                'comment_text' => $request->comment_text ?? '',
+                'attachment'   => $pathFile,
+                'task_id'      => $task_id,
+                'user_id'      => $userId,
+            ]);
+            // نصفر النص للتعليق الثاني لو أرسل ملف وصورة معاً لكي لا يتكرر النص مرتين
+            $request->merge(['comment_text' => '']);
+        }
+
+        // إذا تم إرفاق صورة
+        if ($request->hasFile('image')) {
+            $pathImage = $request->file('image')->store('comments', 'public');
+            Comment::create([
+                'comment_text' => $request->comment_text ?? '',
+                'attachment'   => $pathImage,
+                'task_id'      => $task_id,
+                'user_id'      => $userId,
+            ]);
+        }
+
+        // إذا لم يتم إرفاق لا ملف ولا صورة بل نص فقط
+        if (!$request->hasFile('attachment') && !$request->hasFile('image')) {
+            Comment::create([
+                'comment_text' => $request->comment_text,
+                'attachment'   => null,
+                'task_id'      => $task_id,
+                'user_id'      => $userId,
+            ]);
+        }
+
+        if (auth()->check()) {
+            try {
+                auth()->user()->notify(new SystemActivityNotification(
+                    'تعليق جديد',
+                    'تم إضافة تعليق جديد على المهمة'
+                ));
+            } catch (\Exception $e) {}
+        }
+
+        return redirect()->back();
     }
 }

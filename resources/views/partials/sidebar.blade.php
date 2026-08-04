@@ -21,6 +21,11 @@
                 <i class="fa-solid fa-users icon-style"></i>
                 <span>العملاء</span>
             </a>
+
+           <a href="{{ route('employees.index') }}" class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+    <i class="fa-solid fa-users icon-style"></i>
+    <span>الموظفين</span>
+</a>
             <a href="{{ route('settings.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }} d-flex align-items-center justify-content-start gap-3">
                 <i class="fa-solid fa-gear icon-style"></i>
                 <span>الإعدادات</span>

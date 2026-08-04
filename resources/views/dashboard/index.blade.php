@@ -90,7 +90,7 @@
 
 <!-- قسم المشاريع الأخيرة -->
 <div class="recent-projects-section mt-4" dir="rtl">
-    <h2 class="task-page-title mb-3 ">المشاريع الأخيرة</h2>
+    <h2 class="task-page-title mb-3">المشاريع الأخيرة</h2>
     
     <div class="recent-projects-container p-3 p-md-4">
         <div class="d-flex flex-column gap-3 recent-projects-scroll">
@@ -100,31 +100,39 @@
                     $completedProjectTasks = $project->tasks->where('status', 'مكتملة')->count();
                     $progressPercentage = $totalProjectTasks > 0 ? round(($completedProjectTasks / $totalProjectTasks) * 100) : 0;
                     
-                    // تحديد كلاس البادج بناءً على حالة المشروع
-                    $statusClass = match($project->project_status) {
-                        'مكتملة' => 'badge-completed',
-                        'قيد المراجعة' => 'badge-review',
-                        'قيد التنفيذ' => 'badge-in-progress',
-                        'قيد الانتظار' => 'badge-pending',
-                        'متوقف مؤقتاً', 'متوقف مؤقتا' => 'badge-paused',
-                        default => 'badge-in-progress'
+                    // جلب الحالة من عمود status مباشرة مع القيمة الافتراضية
+                    $currentStatus = trim($project->status ?? 'قيد التنفيذ');
+                    if ($currentStatus === '') {
+                        $currentStatus = 'قيد التنفيذ';
+                    }
+                    
+                    // تحديد الأيقونة والكلاس المتوافق مع تنسيق الحالات في الـ CSS
+                    $statusIcon = match($currentStatus) {
+                        'مكتملة' => 'fa-regular fa-circle-check text-success',
+                        'قيد المراجعة' => 'fa-regular fa-clipboard',
+                        'قيد التنفيذ' => 'fa-solid fa-users-gear',
+                        'قيد الانتظار' => 'fa-solid fa-bars-staggered',
+                        'متوقف مؤقتاً', 'متوقف مؤقتا' => 'fa-regular fa-circle-stop',
+                        default => 'fa-solid fa-users-gear'
                     };
                 @endphp
                 <div class="project-item-card p-3">
                     
-                    <!-- السطر الأول: تفاصيل المشروع يمين (العنوان والشركة) + بادج الحالة يسار -->
+                    <!-- السطر الأول: اسم المشروع وتحته اسم الشركة باتجاه اليمين + الحالة والأيقونة يسار -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="text-end">
                             <h3 class="fw-bold fs-6 mb-1 text-dark">{{ $project->project_name }}</h3>
-                            <div class="text-muted small">{{ $project->company_name ?? 'مشروع خاص' }}</div>
+                            <div class="text-muted small text-end">{{ $project->company_name ?? 'مشروع خاص' }}</div>
                         </div>
-                        {{-- حالة المشروع الديناميكية --}}
-                        <span class="badge {{ $statusClass }}">{{ $project->project_status }}</span>
+                        <div class="status-header d-flex align-items-center gap-2">
+                            <span class="fw-medium" style="font-size: 0.825rem; color: #334155;">{{ $currentStatus }}</span>
+                            <i class="{{ $statusIcon }} status-icon"></i>
+                        </div>
                     </div>
 
-                    <!-- السطر الثاني: معلومات المهام والتاريخ يمين + شريط التقدم والنسبة يسار -->
+                    <!-- السطر الثاني: المهام والتاريخ يمين + النسبة وشريط التقدم يسار -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-2">
-                        <!-- جهة اليمين: المهام وتاريخ الانتهاء بالعربي -->
+                        <!-- جهة اليمين: المهام وتاريخ الانتهاء -->
                         <div class="d-flex align-items-center gap-3">
                             <div class="fw-bold small text-dark">
                                 المهام {{ $completedProjectTasks }}/{{ $totalProjectTasks }}
@@ -137,7 +145,7 @@
                         <!-- جهة اليسار: النسبة المئوية وشريط التقدم -->
                         <div class="d-flex align-items-center gap-2" style="width: 180px;">
                             <span class="small text-muted fw-semibold">{{ $progressPercentage }}%</span>
-                            <div class="progress custom-progress flex-grow-1" style="height: 7px;">
+                            <div class="progress custom-progress flex-grow-1" style="height: 7px;" dir="ltr">
                                 <div aria-valuemax="100" aria-valuemin="0" aria-valuenow="{{ $progressPercentage }}" 
                                      class="progress-bar custom-bg-purple" role="progressbar" 
                                      style="width: {{ $progressPercentage }}%;"></div>

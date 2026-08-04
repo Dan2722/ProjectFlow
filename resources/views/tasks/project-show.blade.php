@@ -12,15 +12,14 @@
 </div>
 
 <!-- عنوان الصفحة -->
-<h3 class="task-page-title";">المهام</h3>
+<h3 class="task-page-title">المهام</h3>
 
 <!-- Task Details Main Header Card -->
 <div class="card custom-task-card p-4 mb-4 bg-white">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div class="text-start">
-            <div class="d-flex align-items-center gap-3 mb-2">
-                <h4 class="fw-bold m-0 fs-5 text-dark">{{ $task->task_title }}</h4>
-                <span class="text-muted small">{{ optional($task->project)->company_name ?? 'شركة غير محددة' }}</span>
+            <div class="mb-2">
+                <h3 class="project-card-title m-0">{{ $task->task_title }}</h3>
             </div>
             <p class="text-muted small m-0">{{ $task->task_description ?? 'لا يوجد وصف للمهمة.' }}</p>
         </div>
@@ -34,11 +33,11 @@
         <div class="text-start text-nowrap">
             <span>
                 تاريخ البداية: {{ $task->start_task ? \Carbon\Carbon::parse($task->start_task)->locale('ar')->translatedFormat('d F Y') : 'غير محدد' }} 
-                → تاريخ الانتهاء: {{ $task->end_task ? \Carbon\Carbon::parse($task->end_task)->locale('ar')->translatedFormat('d F Y') : 'غير محدد' }}
+                ← تاريخ الانتهاء: {{ $task->end_task ? \Carbon\Carbon::parse($task->end_task)->locale('ar')->translatedFormat('d F Y') : 'غير محدد' }}
             </span>
         </div>
         <div class="text-center px-4">
-            <span><strong>ُمُسند:</strong> {{ optional($task->assignedUser)->username ?? 'غير مسند' }}</span>
+            <span><strong>مُسند:</strong> {{ optional($task->assignedUser)->name ?? 'غير مسند' }}</span>
         </div>
         <div></div>
     </div>
@@ -56,21 +55,19 @@
 
     <!-- Scrollable Comments Body -->
     <div class="comments-scroll-area pe-2 mb-4" id="commentsContainer" style="max-height: 380px; overflow-y: auto;">
+        @php
+            $currentUserId = auth()->id();
+        @endphp
+
         @forelse($task->comments ?? [] as $index => $comment)
             @php
                 $commentUser = $comment->user;
                 $userName = $commentUser ? ($commentUser->name ?? $commentUser->username ?? 'مستخدم') : 'مستخدم';
                 $initials = mb_substr($userName, 0, 2);
-                $userRole = $commentUser?->role ?? 'admin';
-                $currentUserId = $commentUser?->id ?? null;
-                
-                $roleLabel = match($userRole) {
-                    'client' => 'عميل',
-                    'employee' => 'موظف',
-                    default => 'مدير'
-                };
 
-                // التحقق مما إذا كان التعليق الحالي من نفس المستخدم السابق تماماً لدمجهما
+                $commentEmail = $commentUser->email ?? '';
+                $roleLabel = str_contains($commentEmail, 'emp') ? 'موظف' : 'مدير';
+
                 $previousComment = $index > 0 ? $task->comments[$index - 1] : null;
                 $prevUser = $previousComment?->user;
                 $prevUserId = $prevUser?->id ?? null;
@@ -87,11 +84,10 @@
             @endphp
 
             @if($isSameUser)
-                <!-- تعليق مدمج (نفس المستخدم ورا بعض: بدون تكرار الأفاتار أو الاسم، وبدون خط فاصل) -->
                 <div class="comment-item ms-5 ps-2 mb-3">
                    <div class="text-muted extra-small mb-1">
-    {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('h:i a') }}
-</div>
+                        {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('h:i a') }}
+                   </div>
                     @if($comment->comment_text)
                         <p class="mb-2 text-dark small">{{ $comment->comment_text }}</p>
                     @endif
@@ -120,7 +116,6 @@
                     @endif
                 </div>
             @else
-                <!-- التعليق الأساسي أو تعليق لمستخدم مختلف (يظهر الخط الفاصل والأفاتار والاسم) -->
                 <div class="d-flex gap-3 mb-3 comment-item {{ $index > 0 ? 'border-top pt-3' : '' }}">
                     <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 42px; height: 42px; background-color: #8A84AD; flex-shrink: 0;">
                         {{ $initials }}
@@ -131,7 +126,7 @@
                             <span class="badge" style="background-color: #8A84AD;">{{ $roleLabel }}</span>
                         </div>
                         <div class="text-muted extra-small mb-2">
-                            {{ $comment->created_at->locale('ar')->translatedFormat('d F Y, h:i a') }}
+                            {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('d F Y, h:i a') }}
                         </div>
                         
                         @if($comment->comment_text)
@@ -169,27 +164,43 @@
     </div>
 
     <!-- Add Comment Form Area -->
-    <form id="commentForm" action="{{ route('comments.store', $task->task_id) }}" method="POST" enctype="multipart/form-data" onsubmit="return handleCommentSubmit(event)">
-    @csrf
-    <div class="d-flex flex-wrap gap-2 mb-2" id="attachmentsPreview"></div>
-    
-    <input class="d-none" id="attachmentInput" name="attachment" type="file" onchange="handleFileSelect(event)"/>
-    
-    <div class="position-relative mb-3">
-        <input class="form-control rounded-pill pe-4 ps-5 py-2 custom-input" id="commentTextInput" name="comment_text" placeholder="اكتب تعليق...... أو أرفق صور/ملفات" type="text"/>
-        <button class="btn btn-link position-absolute start-0 top-50 translate-middle-y text-decoration-none border-0 p-0 ms-3" style="color: #8A84AD;" type="submit">
-            <i class="fa-regular fa-paper-plane fs-5"></i>
-        </button>
-    </div>
+    <form id="commentForm" action="{{ route('comments.store', $task->task_id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        
+        <!-- حقول الملفات والصور المخفية المنفصلة -->
+        <input class="d-none" id="attachmentInput" name="attachment" type="file" onchange="showFileName(this, 'filePreview', 'fileNameText')" />
+        <input class="d-none" id="imageInput" name="image" type="file" accept="image/*" onchange="showFileName(this, 'imagePreview', 'imageNameText')" />
+        
+        <!-- معاينة الملف المختار -->
+        <div id="filePreview" class="mb-2 d-none align-items-center gap-2 p-2 border rounded-3 bg-light">
+            <i class="fa-solid fa-paperclip text-muted"></i>
+            <span id="fileNameText" class="small text-dark fw-bold"></span>
+            <button type="button" class="btn-close ms-auto btn-sm" onclick="removeFile('attachmentInput', 'filePreview')"></button>
+        </div>
 
-    <div class="d-flex gap-2">
-        <button class="btn rounded-pill text-white px-3 py-1 small" onclick="document.getElementById('attachmentInput').accept='.pdf,.doc,.docx,.zip,.fig'; document.getElementById('attachmentInput').click();" style="background-color: #8A84AD;" type="button">
-            <i class="fa-solid fa-paperclip me-1"></i> تحميل ملف
-        </button>
-        <button class="btn rounded-pill text-white px-3 py-1 small" onclick="document.getElementById('attachmentInput').accept='image/*'; document.getElementById('attachmentInput').click();" style="background-color: #8A84AD;" type="button">
-            <i class="fa-regular fa-image me-1"></i> صورة
-        </button>
-    </div>
-</form>
+        <!-- معاينة الصورة المختارة -->
+        <div id="imagePreview" class="mb-2 d-none align-items-center gap-2 p-2 border rounded-3 bg-light">
+            <i class="fa-regular fa-image text-muted"></i>
+            <span id="imageNameText" class="small text-dark fw-bold"></span>
+            <button type="button" class="btn-close ms-auto btn-sm" onclick="removeFile('imageInput', 'imagePreview')"></button>
+        </div>
+
+        <div class="position-relative mb-3">
+            <input class="form-control rounded-pill pe-4 ps-5 py-2 custom-input" id="commentTextInput" name="comment_text" placeholder="اكتب تعليق...... أو أرفق صور/ملفات" type="text"/>
+            <button class="btn btn-link position-absolute start-0 top-50 translate-middle-y text-decoration-none border-0 p-0 ms-3" style="color: #8A84AD;" type="submit">
+                <i class="fa-regular fa-paper-plane fs-5"></i>
+            </button>
+        </div>
+
+        <!-- الأزرار -->
+        <div class="d-flex gap-2">
+            <button class="btn rounded-pill text-white px-3 py-1 small" onclick="document.getElementById('attachmentInput').click();" style="background-color: #8A84AD;" type="button">
+                <i class="fa-solid fa-paperclip me-1"></i> تحميل ملف
+            </button>
+            <button class="btn rounded-pill text-white px-3 py-1 small" onclick="document.getElementById('imageInput').click();" style="background-color: #8A84AD;" type="button">
+                <i class="fa-regular fa-image me-1"></i> صورة
+            </button>
+        </div>
+    </form>
 </div>
 @endsection

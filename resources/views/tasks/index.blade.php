@@ -52,10 +52,12 @@
                                 </a>
                             </h4>
                             {{-- أيقونات التعديل والحذف بجانب بعضهما --}}
-                            <div class="task-actions d-flex align-items-center gap-2">
-                                <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openEditModal(this)"><i class="fa-regular fa-pen-to-square"></i></button>
-                                <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openDeleteModal(this)"><i class="fa-regular fa-trash-can"></i></button>
-                            </div>
+                           @if(str_contains(Auth::user()->email, 'adm'))
+             <div class="task-actions d-flex align-items-center gap-2">
+             <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openEditModal(this)"><i class="fa-regular fa-pen-to-square"></i></button>
+             <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openDeleteModal(this)"><i class="fa-regular fa-trash-can"></i></button>
+                </div>
+                @endif
                         </div>
 
                         <p class="project-name mb-1 text-muted" style="font-size: 12px;">
@@ -122,26 +124,26 @@
 
                     {{-- اسم الشركة ومسند إلى (بجانب بعضهما) --}}
                     <div class="row g-2 mb-3">
-                        <div class="col-6 text-end">
-                            <label class="custom-label mb-1">اسم الشركة <span class="text-danger">*</span></label>
-                            <select class="form-select custom-input text-center" id="companyNameInput" required>
-                                <option value="">اختر الشركة</option>
-                                @foreach($projects->unique('company_name') as $project)
-                                    <option value="{{ $project->company_name }}">{{ $project->company_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <div class="col-6 text-end">
-                            <label class="custom-label mb-1">مسند إلى</label>
-                            <select class="form-select custom-input text-center" id="assignedToInput" name="assigned_to">
-                                <option value="">اختر الموظف</option>
-                                @foreach($employees as $employee)
-                                    <option value="{{ $employee->id }}">{{ $employee->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+    <div class="col-6 text-end">
+        <label class="custom-label mb-1">اسم الشركة <span class="text-danger">*</span></label>
+        <select class="form-select custom-input text-center" id="companyNameInput" required>
+            <option value="">اختر الشركة</option>
+            @foreach($projects->unique('company_name') as $project)
+                <option value="{{ $project->company_name }}">{{ $project->company_name }}</option>
+            @endforeach
+        </select>
+    </div>
+    
+    <div class="col-6 text-end">
+        <label class="custom-label mb-1">مسند إلى <span class="text-danger">*</span></label>
+        <select class="form-control custom-input text-end" id="assignedToInput" name="assigned_to" required>
+            <option value="">اختر الموظف</option>
+            @foreach($employees as $employee)
+                <option value="{{ $employee->employee_id }}">{{ $employee->name }} ({{ $employee->department }})</option>
+            @endforeach
+        </select>
+    </div>
+</div>
 
                     {{-- الوصف --}}
                     <div class="mb-3 text-end">

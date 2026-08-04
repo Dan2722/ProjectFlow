@@ -9,8 +9,31 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\EmployeeController;
 
-// 1. الصفحة الرئيسية (توجيه للمستخدم حسب حالة الدخول)
+Route::middleware(['auth'])->group(function () {
+    
+    // ... مسارات لوحة التحكم والبرفايل والإعدادات الخاصة بك ...
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // مسارات الـ Resources (متاحة للجميع، بينما الحماية ومنع التعديل/الحذف يتم التحكم به عبر الكنترولر والـ Blade)
+    Route::resource('projects', ProjectController::class);
+    Route::resource('tasks', TaskController::class);
+    Route::resource('clients', ClientController::class);
+    Route::resource('employees', EmployeeController::class); // <-- تم جعلها عادية ليتمكن الموظف من الاستطلاع
+
+    // ... باقي المسارات التابعة لك ...
+    Route::get('/project-tasks/{task}', fn ($task) => view('tasks.project-show', compact('task')))->name('tasks.project-show');
+    Route::post('/tasks/{taskId}/comments', [CommentController::class, 'store'])->name('comments.store');
+
+});
+
+Route::resource('employees', EmployeeController::class);
+// تحويل أي رابط أدمن قديم إلى لوحة التحكم الرئيسية فوراً لتجنب خطأ 404
+Route::redirect('/admin/dashboard', '/dashboard');
+Route::redirect('/admin', '/dashboard');
+
+// 1. الصفحة الرئيسية
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
@@ -18,48 +41,35 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// 2. مسارات تسجيل الدخول (للضيوف فقط)
+// 2. مسارات تسجيل الدخول
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('loginUser');
     Route::view('/forgot-password', 'auth.forgot-password')->name('password.request');
 });
 
-// 3. المسارات المحمية بالكامل (تتطلب تسجيل دخول auth)
+// 3. المسارات المحمية
 Route::middleware(['auth'])->group(function () {
     
-    // تسجيل الخروج
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-    // لوحة التحكم الرئيسية
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // الملف الشخصي
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // الإعدادات (باستخدام SettingsController للتحكم بالعرض وتحديث كلمة المرور والإشعارات)
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications');
     Route::post('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
 
-    // إدارة المشاريع والمهام والعملاء
     Route::resource('projects', ProjectController::class);
     Route::resource('tasks', TaskController::class);
     Route::resource('clients', ClientController::class);
+    Route::resource('employees', EmployeeController::class);
 
-    // مسارات إضافية للمهام والتعليقات
-    Route::get('/tasks/{id}', [TaskController::class, 'show'])->name('tasks.show');
     Route::get('/project-tasks/{task}', fn ($task) => view('tasks.project-show', compact('task')))->name('tasks.project-show');
     Route::post('/tasks/{taskId}/comments', [CommentController::class, 'store'])->name('comments.store');
-    
-    Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');
-    Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
-    Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
-
-    // تفعيل قراءة الإشعارات
     Route::get('/notifications/read', function () {
         if (auth()->check()) {
             auth()->user()->unreadNotifications->markAsRead();

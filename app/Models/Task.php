@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Employee;
 
 class Task extends Model
 {
@@ -14,6 +15,7 @@ class Task extends Model
 
     protected $fillable = [
     'task_title',
+    'company_name',
     'project_id',    
     'assigned_to',
     'task_description',
@@ -35,6 +37,6 @@ class Task extends Model
 
     public function assignedUser()
 {
-    return $this->belongsTo(User::class, 'assigned_to');
+    return $this->belongsTo(Employee::class, 'assigned_to', 'employee_id');
 }
 }

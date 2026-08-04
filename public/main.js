@@ -925,3 +925,67 @@ function handleCommentSubmit(event) {
 
     return true; // السماح بإرسال الفورم بالشكل الطبيعي
 }
+
+// دالة إظهار اسم الملف أو الصورة المختارة للمعاينة
+function showFileName(input, previewId, textId) {
+    const preview = document.getElementById(previewId);
+    const text = document.getElementById(textId);
+    if (input.files && input.files[0]) {
+        text.textContent = input.files[0].name;
+        preview.classList.remove('d-none');
+        preview.classList.add('d-flex');
+    }
+}
+
+// دالة إلغاء وتفريغ الملف أو الصورة المختارة
+function removeFile(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    input.value = '';
+    preview.classList.remove('d-flex');
+    preview.classList.add('d-none');
+}
+
+// js of Employee 
+function prepareAddEmployeeModal(storeRoute) {
+        document.getElementById('employeeModalTitle').innerText = 'إضافة موظف جديد';
+        document.getElementById('employeeForm').action = storeRoute;
+        document.getElementById('employeeFormMethod').value = 'POST';
+        document.getElementById('employeeNameInput').value = '';
+        document.getElementById('departmentInput').value = '';
+        document.getElementById('employeeEmailInput').value = '';
+        document.getElementById('employeePhoneInput').value = '';
+        
+        var myModal = new bootstrap.Modal(document.getElementById('employeeModal'));
+        myModal.show();
+    }
+
+    function openEditEmployeeModal(button, updateRoute) {
+        var wrapper = button.closest('.employee-card-wrapper');
+        var name = wrapper.getAttribute('data-employee-name');
+        var department = wrapper.getAttribute('data-department');
+        var email = wrapper.getAttribute('data-employee-email');
+        var phone = wrapper.getAttribute('data-employee-phone');
+
+        document.getElementById('employeeModalTitle').innerText = 'تعديل بيانات الموظف';
+        document.getElementById('employeeForm').action = updateRoute;
+        document.getElementById('employeeFormMethod').value = 'PUT';
+        document.getElementById('employeeNameInput').value = name;
+        document.getElementById('departmentInput').value = department;
+        document.getElementById('employeeEmailInput').value = email;
+        document.getElementById('employeePhoneInput').value = phone;
+
+        var myModal = new bootstrap.Modal(document.getElementById('employeeModal'));
+        myModal.show();
+    }
+
+    function openDeleteEmployeeModal(button, destroyRoute) {
+        var wrapper = button.closest('.employee-card-wrapper');
+        var name = wrapper.getAttribute('data-employee-name');
+        
+        document.getElementById('deleteEmployeeModalText').innerText = 'هل تريد حذف الموظف (' + name + ')؟';
+        document.getElementById('deleteEmployeeForm').action = destroyRoute;
+
+        var myModal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+        myModal.show();
+    }

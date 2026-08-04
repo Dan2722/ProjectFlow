@@ -14,46 +14,42 @@ class AuthController extends Controller
     }
 
     // معالجة بيانات تسجيل الدخول
-    public function login(Request $request)
-    {
-        // 1. التحقق من المدخلات
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ], [
-            'email.required' => 'يرجى إدخال البريد الإلكتروني',
-            'email.email' => 'صيغة البريد الإلكتروني غير صحيحة',
-            'password.required' => 'يرجى إدخال كلمة المرور',
-        ]);
+  public function login(Request $request)
+{
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        $remember = $request->has('remember');
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        $user = Auth::user();
 
-        // 2. محاولة تسجيل الدخول
-        if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
-            // التوجيه إلى الصفحة الرئيسية/الداشبورد
-            return redirect()->intended(route('dashboard'));
+        // تحديد الرويل تلقائياً بناءً على الايميل المطلوب
+        if ($user->email === 'admDan@fvs.com.sa') {
+            $user->role = 'admin';
+        } elseif ($user->email === 'empLayan@fvs.com.sa') {
+            $user->role = 'employee';
         }
+        $user->save();
 
-        // 3. في حال كانت البيانات غير صحيحة
-        return back()->withErrors([
-            'email' => 'بيانات الاعتماد هذه لا تتطابق مع سجلاتنا.',
-        ])->onlyInput('email');
+        return redirect()->intended('dashboard');
     }
 
-    // تسجيل الخروج
-public function logout(Request $request)
-{
-    Auth::logout();
-
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-
-    return redirect()->route('login'); // تم التعديل ليوجه لصفحة تسجيل الدخول
+    return back()->withErrors([
+        'email' => 'البيانات المدخلة غير مطابقة لطبيعة الحساب.',
+    ]);
 }
-}
+    public function logout(Request $request)
+    {
+        Auth::logout();
 
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
+    }
+}
 
 
 

@@ -22,7 +22,6 @@ class ClientController extends Controller
             'email'        => 'required|email|max:255',
             'phone'        => 'required|string|max:20',
             'project_name' => 'required|string|max:255',
-            
         ]);
 
         $client = Client::create([
@@ -34,7 +33,6 @@ class ClientController extends Controller
             'user_id'      => auth()->id(),
         ]);
 
-        // إشعار الإضافة
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'إضافة عميل',
@@ -65,7 +63,6 @@ class ClientController extends Controller
             'user_id'      => auth()->id(),
         ]);
 
-        // إشعار التعديل
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'تعديل عميل',
@@ -82,7 +79,6 @@ class ClientController extends Controller
         $clientName = $client->name;
         $client->delete();
 
-        // إشعار الحذف
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'حذف عميل',

@@ -6,9 +6,11 @@
 <!-- هيدر قسم العملاء -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="task-page-title m-0">العملاء</h2>
+    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
     <button class="btn btn-add-task d-flex align-items-center gap-2" onclick="prepareAddClientModal('{{ route('clients.store') }}')">
         <span>عميل جديد +</span>
     </button>
+    @endif
 </div>
 
 <!-- كارد إجمالي العملاء -->
@@ -40,6 +42,8 @@
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <span class="client-badge">عميل</span>
+                            
+                            @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
                             <div class="task-actions">
                                 <button type="button" class="btn-icon text-muted me-1 border-0 bg-transparent p-0" onclick="openEditClientModal(this, '{{ route('clients.update', $client) }}')">
                                     <i class="fa-regular fa-pen-to-square"></i>
@@ -48,6 +52,7 @@
                                     <i class="fa-regular fa-trash-can"></i>
                                 </button>
                             </div>
+                            @endif
                         </div>
                     </div>
                     <hr class="my-2 text-muted"/>
@@ -68,6 +73,7 @@
 @endsection
 
 @push('modals')
+@if(auth()->user()->email !== 'empLayan@fvs.com.sa')
 <!-- 1. مودال إضافة وتعديل عميل -->
 <div aria-hidden="true" class="modal fade" id="clientModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -128,4 +134,5 @@
         </div>
     </div>
 </div>
+@endif
 @endpush

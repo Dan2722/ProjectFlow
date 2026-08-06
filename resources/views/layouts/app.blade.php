@@ -32,23 +32,22 @@
 
     @stack('modals')
 
-    <!-- نافذة النجاح المنبثقة الموحدة لكل الصفحات -->
-    <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 rounded-4 shadow-sm text-center p-5" style="background-color: #ffffff;">
-                <div class="mb-3">
-                    <div class="mx-auto d-flex align-items-center justify-content-center rounded-circle" style="width: 75px; height: 75px; background-color: #198754;">
-                        <i class="fa-solid fa-check text-white fs-2"></i>
-                    </div>
+   <!-- نافذة النجاح المنبثقة الموحدة -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow-sm text-center p-4" style="background-color: #ffffff;">
+            <div class="mb-2">
+                <div class="success-icon-wrapper mx-auto d-flex align-items-center justify-content-center rounded-circle">
+                    <i class="fa-solid fa-check text-white"></i>
                 </div>
-                <p class="fw-bold fs-4 mb-4 text-dark" id="successModalText"></p>
-                <div class="d-flex justify-content-center">
-                    <button type="button" class="btn text-white px-5 py-2 rounded-pill fw-semibold" data-bs-dismiss="modal" style="background-color: #8A84AD; border: none; min-width: 130px;">حسناً</button>
-                </div>
+            </div>
+            <p class="delete-text my-3" id="successModalText"></p>
+            <div class="d-flex justify-content-center">
+                <button type="button" class="btn btn-status-ok" data-bs-dismiss="modal">حسناً</button>
             </div>
         </div>
     </div>
-
+</div>
     <script>
         window.FVS_ROUTES = {
             dashboard: @json(route('dashboard'))

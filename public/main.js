@@ -320,9 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-
 /* ==========================================
-   Login Page JS
+    Login Page JS
 ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
@@ -345,17 +344,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const username = usernameInput ? usernameInput.value.trim() : '';
             const password = passwordInput ? passwordInput.value.trim() : '';
-            const emailPattern = /^[a-zA-Z0-9._%+-]+@fvs\.com\.sa$/;
+            
+            // تعديل النمط ليقبل إيميل الشركة أو أي بريد إلكتروني صالح (للعملاء)
+            const fvsPattern = /^[a-zA-Z0-9._%+-]+@fvs\.com\.sa$/;
+            const generalEmailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
             if (!username) {
                 e.preventDefault();
-                showError(usernameInput, usernameError, 'يرجى إدخال اسم المستخدم');
+                showError(usernameInput, usernameError, 'يرجى إدخال البريد الإلكتروني');
                 return;
             }
 
-            if (!emailPattern.test(username)) {
+            // التحقق مما إذا كان البريد إما ينتمي لشركة fvs أو بريد إلكتروني صحيح (للعميل)
+            if (!fvsPattern.test(username) && !generalEmailPattern.test(username)) {
                 e.preventDefault();
-                showError(usernameInput, usernameError, 'الصيغة غير صحيحة، يجب أن ينتهي البريد بـ name@fvs.com.sa');
+                showError(usernameInput, usernameError, 'يرجى إدخال بريد إلكتروني صحيح');
                 return;
             }
 
@@ -987,5 +990,14 @@ function prepareAddEmployeeModal(storeRoute) {
         document.getElementById('deleteEmployeeForm').action = destroyRoute;
 
         var myModal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+        myModal.show();
+    }
+
+      function openEmployeeProjectStatusModal(projectId, currentStatus, updateUrl) {
+        const form = document.getElementById('employeeProjectStatusForm');
+        form.action = updateUrl;
+        document.getElementById('employeeProjectStatusSelect').value = currentStatus;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('employeeProjectStatusModal'));
         myModal.show();
     }

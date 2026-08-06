@@ -46,8 +46,15 @@
     </ol>
 </nav>
 
-<!-- عنوان الصفحة -->
-<h1 class="task-page-title" id="pageMainTitle">المشاريع</h1>
+<!-- عنوان الصفحة وزر إضافة مهمة (يُخفي زر الإضافة عن الموظفة والعميل) -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="task-page-title m-0" id="pageMainTitle">المشاريع</h1>
+    @if(auth()->user()->email !== 'empLayan@fvs.com.sa' && !\App\Models\Client::where('email', auth()->user()->email)->exists())
+    <button class="btn btn-add-task d-flex align-items-center gap-2" data-bs-target="#taskModal" data-bs-toggle="modal" onclick="prepareAddModal()">
+        <span>إضافة مهمة +</span>
+    </button>
+    @endif
+</div>
 
 @php
     // مصفوفة خريطة الأيقونات الموحدة لكل الحالات (مطابقة تماماً لصفحة المهام)
@@ -111,7 +118,7 @@
     </div>
 </div>
 
-<!-- شبكة أعمدة الحالات (مطابقة تماماً لتنسيق اسم الحالة والأيقونة في صفحة المهام) -->
+<!-- شبكة أعمدة الحالات -->
 @php
     $statuses = [
         'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
@@ -131,7 +138,7 @@
 
         <div class="col">
             <div class="card border rounded-4 p-3 bg-white shadow-sm d-flex flex-column" style="border-color: #EFEEF3 !important; height: 440px;">
-                <!-- رأس العمود (مطابق تماماً لتنسيق صفحة المهام) -->
+                <!-- رأس العمود -->
                 <div class="status-header d-flex align-items-center justify-content-start gap-2 mb-3">
                     <span class="status-title">{{ $statusName }}</span>
                     <i class="{{ $statusMeta['icon'] }} status-icon status-success-icon {{ $statusMeta['class'] }} ms-auto" style="color: #8A84AD;"></i>
@@ -162,14 +169,28 @@
                                     <div class="text-muted end-date" style="font-size: 11px;">
                                         {{ $task->end_task ? \Carbon\Carbon::parse($task->end_task)->translatedFormat('d F Y') : 'غير محدد' }}
                                     </div>
+
+                                  {{-- الأكشنز وفقاً للصلاحيات: الأدمن (تعديل وحذف)، الموظفة (تعديل الحالة فقط)، العميل (لا شيء) --}}
+                                  @if(!\App\Models\Client::where('email', auth()->user()->email)->exists())
                                     <div class="task-actions d-flex align-items-center gap-2" style="font-size: 14px;">
-                                        <button class="btn-icon border-0 bg-transparent p-0" onclick="openEditModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-pen-to-square"></i></button>
-                                        <button class="btn-icon border-0 bg-transparent p-0" onclick="openDeleteModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-trash-can"></i></button>
+                                        @if(str_contains(Auth::user()->email, 'adm') || auth()->user()->email !== 'empLayan@fvs.com.sa')
+                                            <button class="btn-icon border-0 bg-transparent p-0" onclick="openEditModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-pen-to-square"></i></button>
+                                            @if(str_contains(Auth::user()->email, 'adm'))
+                                                <button class="btn-icon border-0 bg-transparent p-0" onclick="openDeleteModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-trash-can"></i></button>
+                                            @endif
+                                        @else
+                                            {{-- أيقونة تعديل الحالة الخاصة بالموظف --}}
+                                            <button class="btn-icon border-0 bg-transparent p-0" title="تعديل الحالة" onclick="openEmployeeTaskStatusModal('{{ $task->task_id }}', '{{ $task->status }}', '{{ route('tasks.update', $task->task_id) }}')" style="color: #8A84AD;">
+                                                <i class="fa-regular fa-pen-to-square"></i>
+                                            </button>
+                                        @endif
+
                                         <div class="d-flex align-items-center gap-1" style="color: #8A84AD;">
                                             <i class="fa-regular fa-comment"></i>
                                             <span style="font-size: 12px;">{{ $task->comments_count ?? ($task->comments ? $task->comments->count() : 0) }}</span>
                                         </div>
                                     </div>
+                                  @endif
                                 </div>
                             </div>
                         @empty
@@ -186,104 +207,153 @@
 @endsection
 
 @push('modals')
-{{-- Modal إضافة / تعديل المهمة --}}
-<div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content custom-modal p-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="modal-title m-0" id="taskModalTitle">إضافة مهمة</h3>
-                <button aria-label="Close" class="btn-close m-0" data-bs-dismiss="modal" type="button"></button>
-            </div>
-            
-            <form id="taskForm" action="{{ route('tasks.store') }}" method="POST">
-                @csrf
-                <input type="hidden" name="_method" id="taskFormMethod" value="POST">
-
-                <div class="mb-3">
-                    <label class="form-label custom-label">اسم المهمة <span class="text-danger">*</span></label>
-                    <input class="form-control custom-input w-100" id="taskNameInput" name="task_title" required type="text" placeholder="أدخل اسم المهمة"/>
+{{-- الموديلات تظهر فقط للأدمن والموظفة، وتُحجب تماماً عن العميل --}}
+@if(!\App\Models\Client::where('email', auth()->user()->email)->exists())
+    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+    {{-- Modal إضافة / تعديل المهمة (للأدمن فقط) --}}
+    <div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content custom-modal p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="modal-title m-0" id="taskModalTitle" style="font-size: 18px; font-weight: 700;">إضافة مهمة</h3>
+                    <button aria-label="Close" class="btn-close m-0" data-bs-dismiss="modal" type="button"></button>
                 </div>
+                
+                <form id="taskForm" action="{{ route('tasks.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="_method" id="taskFormMethod" value="POST">
 
-                <div class="mb-3">
-                    <label class="form-label custom-label">اسم المشروع <span class="text-danger">*</span></label>
-                    <select class="form-select custom-input w-100" id="projectIdInput" name="project_id" required>
-                        <option value="{{ $project->project_id }}" selected>{{ $project->project_name }}</option>
-                        @foreach($projects ?? [] as $p)
-                            @if($p->project_id != $project->project_id)
-                                <option value="{{ $p->project_id }}">{{ $p->project_name }}</option>
-                            @endif
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label custom-label">اسم الشركة <span class="text-danger">*</span></label>
-                        <select class="form-select custom-input w-100" id="companyNameInput" required>
-                            <option value="{{ $project->company_name }}" selected>{{ $project->company_name ?? 'اختر الشركة' }}</option>
-                        </select>
+                    <div class="mb-3">
+                        <label class="form-label custom-label">اسم المهمة <span class="text-danger">*</span></label>
+                        <input class="form-control custom-input w-100" id="taskNameInput" name="task_title" required type="text" placeholder="أدخل اسم المهمة"/>
                     </div>
-                    
-                    <div class="col-6">
-                        <label class="form-label custom-label">مسند إلى</label>
-                        <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to">
-                            <option value="">اختر الموظف</option>
-                            @foreach($employees ?? [] as $employee)
-                                <option value="{{ $employee->id }}">{{ $employee->name }}</option>
+
+                    <div class="mb-3">
+                        <label class="form-label custom-label">اسم المشروع <span class="text-danger">*</span></label>
+                        <select class="form-select custom-input w-100" id="projectIdInput" name="project_id" required>
+                            <option value="{{ $project->project_id }}" selected>{{ $project->project_name }}</option>
+                            @foreach($projects ?? [] as $p)
+                                @if($p->project_id != $project->project_id)
+                                    <option value="{{ $p->project_id }}">{{ $p->project_name }}</option>
+                                @endif
                             @endforeach
                         </select>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label class="form-label custom-label">الوصف <span class="text-danger">*</span></label>
-                    <textarea class="form-control custom-input w-100" id="descriptionInput" name="task_description" required rows="2" placeholder="أدخل وصف المهمة"></textarea>
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label custom-label">تاريخ البدء <span class="text-danger">*</span></label>
-                        <input class="form-control custom-date-btn w-100" id="startDateInput" name="start_task" required type="date"/>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label custom-label">اسم الشركة <span class="text-danger">*</span></label>
+                            <select class="form-select custom-input w-100" id="companyNameInput" required>
+                                <option value="{{ $project->company_name }}" selected>{{ $project->company_name ?? 'اختر الشركة' }}</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-6">
+                            <label class="form-label custom-label">مسند إلى</label>
+                            <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to">
+                                <option value="">اختر الموظف</option>
+                                @foreach($employees ?? [] as $employee)
+                                    <option value="{{ $employee->employee_id ?? $employee->id }}">{{ $employee->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <label class="form-label custom-label">تاريخ الانتهاء <span class="text-danger">*</span></label>
-                        <input class="form-control custom-date-btn w-100" id="endDateInput" name="end_task" required type="date"/>
+
+                    <div class="mb-3">
+                        <label class="form-label custom-label">الوصف <span class="text-danger">*</span></label>
+                        <textarea class="form-control custom-input w-100" id="descriptionInput" name="task_description" required rows="2" placeholder="أدخل وصف المهمة"></textarea>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="form-label custom-label">الحالة <span class="text-danger">*</span></label>
-                    <select class="form-select custom-input w-100" id="statusSelect" name="status" required>
-                        <option value="قيد التنفيذ">قيد التنفيذ</option>
-                        <option value="قيد المراجعة">قيد المراجعة</option>
-                        <option value="مكتملة">مكتملة</option>
-                        <option value="متوقف مؤقتا">متوقف مؤقتا</option>
-                        <option value="قيد الانتظار">قيد الانتظار</option>
-                    </select>
-                </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label custom-label">تاريخ البدء <span class="text-danger">*</span></label>
+                            <input class="form-control custom-date-btn w-100" id="startDateInput" name="start_task" required type="date"/>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label custom-label">تاريخ الانتهاء <span class="text-danger">*</span></label>
+                            <input class="form-control custom-date-btn w-100" id="endDateInput" name="end_task" required type="date"/>
+                        </div>
+                    </div>
 
-                <div class="text-center">
-                    <button class="btn btn-save px-5" type="submit">حفظ</button>
-                </div>
-            </form>
+                    <div class="mb-4">
+                        <label class="form-label custom-label">الحالة <span class="text-danger">*</span></label>
+                        <select class="form-select custom-input w-100" id="statusSelect" name="status" required>
+                            <option value="قيد التنفيذ">قيد التنفيذ</option>
+                            <option value="قيد المراجعة">قيد المراجعة</option>
+                            <option value="مكتملة">مكتملة</option>
+                            <option value="متوقف مؤقتاً">متوقف مؤقتاً</option>
+                            <option value="قيد الانتظار">قيد الانتظار</option>
+                        </select>
+                    </div>
+
+                    <div class="text-center">
+                        <button class="btn btn-save px-5" type="submit">حفظ</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-{{-- Modal الحذف --}}
-<div aria-hidden="true" class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
-        <div class="modal-content custom-modal text-center p-4">
-            <h4 class="delete-text mb-4 fw-bold" id="deleteModalText">هل تريد حذف المهمة؟</h4>
-            <form id="deleteTaskForm" method="POST" action="">
-                @csrf
-                @method('DELETE')
-                <div class="d-flex justify-content-center gap-3">
-                    <button type="submit" class="btn btn-delete-confirm">حذف</button>
-                    <button type="button" class="btn btn-delete-cancel" data-bs-dismiss="modal">إلغاء</button>
-                </div>
-            </form>
+    {{-- Modal الحذف (للأدمن فقط) --}}
+    <div aria-hidden="true" class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+            <div class="modal-content custom-modal text-center p-4">
+                <h4 class="delete-text mb-4 fw-bold" id="deleteModalText">هل تريد حذف المهمة؟</h4>
+                <form id="deleteTaskForm" method="POST" action="">
+                    @csrf
+                    @method('DELETE')
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="submit" class="btn btn-delete-confirm">حذف</button>
+                        <button type="button" class="btn btn-delete-cancel" data-bs-dismiss="modal">إلغاء</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-</div>
+    @endif
+
+    {{-- Modal خاص بالموظف لتعديل حالة المهمة فقط --}}
+    <div aria-hidden="true" class="modal fade" id="employeeTaskStatusModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content custom-modal p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="modal-title m-0" style="font-size: 18px; font-weight: 700;">تعديل حالة المهمة</h3>
+                    <button aria-label="Close" class="btn-close m-0" data-bs-dismiss="modal" type="button"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <form id="employeeTaskStatusForm" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="mb-4 text-end">
+                            <label class="custom-label mb-1">حالة المهمة <span class="text-danger">*</span></label>
+                            <select class="form-select custom-input text-center" id="employeeTaskStatusSelect" name="status" required>
+                                <option value="قيد التنفيذ">قيد التنفيذ</option>
+                                <option value="قيد المراجعة">قيد المراجعة</option>
+                                <option value="مكتملة">مكتملة</option>
+                                <option value="متوقف مؤقتاً">متوقف مؤقتاً</option>
+                                <option value="قيد الانتظار">قيد الانتظار</option>
+                            </select>
+                        </div>
+                        <div class="text-center pt-2">
+                            <button class="btn btn-save" type="submit">تحديث الحالة</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+@endpush
+
+@push('scripts')
+<script>
+    function openEmployeeTaskStatusModal(taskId, currentStatus, updateUrl) {
+        const form = document.getElementById('employeeTaskStatusForm');
+        form.action = updateUrl;
+        document.getElementById('employeeTaskStatusSelect').value = currentStatus;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('employeeTaskStatusModal'));
+        myModal.show();
+    }
+</script>
 @endpush

@@ -103,10 +103,18 @@
                         <label class="custom-label mb-1">رقم الهاتف <span class="text-danger">*</span></label>
                         <input class="form-control custom-input text-end" id="clientPhoneInput" name="phone" pattern="^05[0-9]{8}$" required title="يرجى إدخال رقم هاتف سعودي صحيح يبدأ بـ 05 ومكون من 10 أرقام" type="tel"/>
                     </div>
+                    
+                    <!-- تم تحويل حقل اسم المشروع إلى Dropdown List -->
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">اسم المشروع <span class="text-danger">*</span></label>
-                        <input class="form-control custom-input text-end" id="clientProjectInput" name="project_name" required type="text"/>
+                        <select class="form-control custom-input text-end" id="clientProjectInput" name="project_name" required>
+                            <option value="" disabled selected>اختر المشروع المناسب</option>
+                            @foreach($projects as $project)
+                                <option value="{{ $project->project_name }}">{{ $project->project_name }}</option>
+                            @endforeach
+                        </select>
                     </div>
+
                     <div class="text-center pt-2">
                         <button class="btn btn-save" type="submit">حفظ العميل</button>
                     </div>

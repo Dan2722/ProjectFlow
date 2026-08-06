@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Notifications\SystemActivityNotification;
+use App\Models\Project;
 
 class ClientController extends Controller
 {
     public function index()
     {
-        $clients = Client::latest()->get();
-        return view('clients.index', compact('clients'));
+        $clients = Client::all();
+    $projects = Project::all();
+    return view('clients.index', compact('clients', 'projects'));
     }
 
     public function store(Request $request)

@@ -203,16 +203,3 @@
     </div>
 </div>
 @endpush
-
-@push('scripts')
-<script>
-    function openEmployeeProjectStatusModal(projectId, currentStatus, updateUrl) {
-        const form = document.getElementById('employeeProjectStatusForm');
-        form.action = updateUrl;
-        document.getElementById('employeeProjectStatusSelect').value = currentStatus;
-        
-        var myModal = new bootstrap.Modal(document.getElementById('employeeProjectStatusModal'));
-        myModal.show();
-    }
-</script>
-@endpush

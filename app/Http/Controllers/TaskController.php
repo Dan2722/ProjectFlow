@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\Project;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Notifications\SystemActivityNotification;
 use App\Models\Employee;
@@ -12,21 +13,34 @@ class TaskController extends Controller
 {
     public function index()
     {
-        $tasks = Task::with(['project', 'comments'])->get();
-        $projects = Project::all();
-        $employees = Employee::all(); 
+        $user = auth()->user();
+        $client = Client::where('email', $user->email)->first();
+
+        // إذا كان المستخدم عميلاً: نجلب فقط المهام والمشاريع التابعة لمشروعه
+        if ($client) {
+            $tasks = Task::whereHas('project', function($query) use ($client) {
+                $query->where('project_name', $client->project_name);
+            })->with(['project', 'comments'])->get();
+
+            $projects = Project::where('project_name', $client->project_name)->get();
+            $employees = Employee::all(); 
+        } else {
+            // للأدمن أو الموظفة
+            $tasks = Task::with(['project', 'comments'])->get();
+            $projects = Project::all();
+            $employees = Employee::all(); 
+        }
 
         return view('tasks.index', compact('tasks', 'projects', 'employees'));
     }
 
     public function store(Request $request)
     {
-        // حماية: الموظف ممنوع من إضافة المهام
-        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+        // منع العميل والموظفة من إضافة المهام
+        if (auth()->user()->email === 'empLayan@fvs.com.sa' || Client::where('email', auth()->user()->email)->exists()) {
             abort(403, 'عذراً، لا تمتلك صلاحية إضافة مهام.');
         }
-
-        // جلب المشروع المرتبط للتحقق من نطاق التواريخ
+     
         $project = Project::where('project_id', $request->project_id)->firstOrFail();
 
         $validated = $request->validate([
@@ -42,7 +56,6 @@ class TaskController extends Controller
 
         $task = Task::create($validated);
 
-        // إشعار إضافة المهمة مع اسم المهمة
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'إضافة مهمة',
@@ -56,9 +69,14 @@ class TaskController extends Controller
 
     public function update(Request $request, $id)
     {
+        // منع العميل من تعديل المهام نهائياً
+        if (Client::where('email', auth()->user()->email)->exists()) {
+            abort(403, 'عذراً، لا تمتلك صلاحية تعديل المهام.');
+        }
+
         $task = Task::where('task_id', $id)->firstOrFail();
 
-        // إذا كان المستخدم هو الموظف، نسمح له بتحديث "الحالة" فقط ونمنع تعديل باقي البيانات
+        // إذا كان المستخدم هو الموظف، نسمح له بتحديث "الحالة" فقط
         if (auth()->user()->email === 'empLayan@fvs.com.sa') {
             $request->validate([
                 'status' => 'required|string',
@@ -91,12 +109,10 @@ class TaskController extends Controller
             'start_task'       => ['required', 'date', 'after_or_equal:' . $project->start_project, 'before_or_equal:' . $project->end_project],
             'end_task'         => ['required', 'date', 'after_or_equal:start_task', 'before_or_equal:' . $project->end_project],
             'status'           => 'required|string',
-            
         ]);
 
         $task->update($validated);
 
-        // إشعار التعديل مع اسم المهمة
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'تعديل مهمة',
@@ -110,8 +126,8 @@ class TaskController extends Controller
 
     public function destroy($id)
     {
-        // حماية: الموظف ممنوع من حذف المهام
-        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+        // حماية: الموظف والعميل ممنوعون من حذف المهام
+        if (auth()->user()->email === 'empLayan@fvs.com.sa' || Client::where('email', auth()->user()->email)->exists()) {
             abort(403, 'عذراً، لا تمتلك صلاحية حذف المهام.');
         }
 
@@ -119,7 +135,6 @@ class TaskController extends Controller
         $taskTitle = $task->task_title;
         $task->delete();
 
-        // إشعار الحذف مع اسم المهمة
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'حذف مهمة',
@@ -134,6 +149,16 @@ class TaskController extends Controller
     public function show($id)
     {
         $task = Task::with(['project', 'assignedUser', 'comments.user'])->findOrFail($id);
+        $user = auth()->user();
+        $client = Client::where('email', $user->email)->first();
+
+        // إذا كان المستخدم عميل، نتحقق أن المهمة تتبع لمشروعه فقط
+        if ($client) {
+            if ($task->project->project_name !== $client->project_name) {
+                abort(403, 'عذراً، لا تملك صلاحية الاطلاع على هذه المهمة.');
+            }
+        }
+
         return view('tasks.project-show', compact('task'));
     }
 }

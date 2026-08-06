@@ -12,7 +12,26 @@ class ProjectController extends Controller
     public function index()
     {
         $projects = Project::with('user')->get();
-        return view('projects.index', compact('projects'));
+        $user = auth()->user();
+
+    // التحقق هل المستخدم عميل (أي مسجل في جدول clients بنفس الإيميل وليس أدمن أو موظف مثل لارين)
+    $client = \App\Models\Client::where('email', $user->email)->first();
+
+    if ($client) {
+        // إذا كان عميل: نجلب فقط المشروع المرتبط به (بناءً على اسم المشروع أو الـ ID حسب ربطك)
+        // ونجلب معه الموظف المسؤول ومهامه فقط
+        $projects = \App\Models\Project::where('project_name', $client->project_name)
+                    ->with(['employee', 'tasks']) // تأكد أن علاقة employee و tasks معرفة في مودل Project
+                    ->get();
+    } elseif ($user->email === 'empLayan@fvs.com.sa') {
+        // صلاحيات الموظفة (لارين)
+        $projects = \App\Models\Project::with(['employee', 'tasks'])->get();
+    } else {
+        // صلاحيات الأدمن (كل المشاريع)
+        $projects = \App\Models\Project::with(['employee', 'tasks'])->get();
+    }
+
+    return view('projects.index', compact('projects'));
     }
 
     // حفظ مشروع جديد

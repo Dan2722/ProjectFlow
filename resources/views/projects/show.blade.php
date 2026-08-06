@@ -344,16 +344,3 @@
     </div>
 @endif
 @endpush
-
-@push('scripts')
-<script>
-    function openEmployeeTaskStatusModal(taskId, currentStatus, updateUrl) {
-        const form = document.getElementById('employeeTaskStatusForm');
-        form.action = updateUrl;
-        document.getElementById('employeeTaskStatusSelect').value = currentStatus;
-        
-        var myModal = new bootstrap.Modal(document.getElementById('employeeTaskStatusModal'));
-        myModal.show();
-    }
-</script>
-@endpush

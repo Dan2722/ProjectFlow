@@ -3,10 +3,18 @@
 @section('content-class', 'p-4 flex-grow-1')
 
 @section('content')
+@php
+    $user = auth()->user();
+    $email = $user->email ?? '';
+    $isClient = ($user->role === 'client' || \App\Models\Client::where('email', $email)->exists());
+    $isEmployee = ($user->role === 'employee' || str_contains($email, 'emp') || $email === 'empLayan@fvs.com.sa');
+    $canManage = !$isClient && !$isEmployee;
+@endphp
+
 <!-- هيدر قسم العملاء -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="task-page-title m-0">العملاء</h2>
-    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+    @if($canManage)
     <button class="btn btn-add-task d-flex align-items-center gap-2" onclick="prepareAddClientModal('{{ route('clients.store') }}')">
         <span>عميل جديد +</span>
     </button>
@@ -43,7 +51,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <span class="client-badge">عميل</span>
                             
-                            @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+                            @if($canManage)
                             <div class="task-actions">
                                 <button type="button" class="btn-icon text-muted me-1 border-0 bg-transparent p-0" onclick="openEditClientModal(this, '{{ route('clients.update', $client) }}')">
                                     <i class="fa-regular fa-pen-to-square"></i>
@@ -73,7 +81,7 @@
 @endsection
 
 @push('modals')
-@if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+@if($canManage)
 <!-- 1. مودال إضافة وتعديل عميل -->
 <div aria-hidden="true" class="modal fade" id="clientModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -91,20 +99,28 @@
                         <label class="custom-label mb-1">اسم العميل <span class="text-danger">*</span></label>
                         <input class="form-control custom-input text-end" id="clientNameInput" name="name" required type="text"/>
                     </div>
+
+                    <!-- حقل اسم الشركة (قائمة منسدلة إلزامية مرتبطة بقاعدة البيانات) -->
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">اسم الشركة <span class="text-danger">*</span></label>
-                        <input class="form-control custom-input text-end" id="companyNameInput" name="company_name" required type="text"/>
+                        <select class="form-control custom-input text-end" id="companyNameInput" name="company_name" required>
+                            <option value="" disabled selected>اختر الشركة المناسبة</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->company_name }}">{{ $company->company_name }}</option>
+                            @endforeach
+                        </select>
                     </div>
+
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">البريد الإلكتروني <span class="text-danger">*</span></label>
                         <input class="form-control custom-input text-end" id="clientEmailInput" name="email" required type="email"/>
                     </div>
+                    
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">رقم الهاتف <span class="text-danger">*</span></label>
                         <input class="form-control custom-input text-end" id="clientPhoneInput" name="phone" pattern="^05[0-9]{8}$" required title="يرجى إدخال رقم هاتف سعودي صحيح يبدأ بـ 05 ومكون من 10 أرقام" type="tel"/>
                     </div>
                     
-                    <!-- تم تحويل حقل اسم المشروع إلى Dropdown List -->
                     <div class="mb-3 text-end">
                         <label class="custom-label mb-1">اسم المشروع <span class="text-danger">*</span></label>
                         <select class="form-control custom-input text-end" id="clientProjectInput" name="project_name" required>

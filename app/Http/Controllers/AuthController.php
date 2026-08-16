@@ -4,17 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Client; // تم استدعاء مودل العميل هنا
+use App\Models\Client;
 
 class AuthController extends Controller
 {
-    // عرض صفحة تسجيل الدخول
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    // معالجة بيانات تسجيل الدخول
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -26,30 +24,23 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $user = Auth::user();
 
-            // تحديد الرويل والصلاحيات تلقائياً بناءً على نوع الحساب
-            if ($user->email === 'admDan@fvs.com.sa') {
+            // تحديد الرويل والصلاحيات وحفظها في قاعدة البيانات تلقائياً
+            if (str_contains($user->email, 'adm')) {
                 $user->role = 'admin';
                 $user->save();
                 return redirect()->intended('dashboard');
             } 
-            elseif ($user->email === 'empLayan@fvs.com.sa') {
+            elseif (str_contains($user->email, 'emp')) {
                 $user->role = 'employee';
                 $user->save();
                 return redirect()->route('tasks.index');
             } 
             else {
-                // التحقق إذا كان المستخدم مسجلاً كعميل في جدول clients
-                $client = Client::where('email', $user->email)->first();
-                if ($client) {
-                    $user->role = 'client';
-                    $user->save();
-                    // توجيه العميل مباشرة لصفحة المشاريع (التي ستعرض مشروعه فقط)
-                    return redirect()->route('projects.index');
-                }
+                // أي إيميل عادي يُعتبر عميلاً ويتم تحديث الحقل في قاعدة البيانات ليكون client
+                $user->role = 'client';
+                $user->save();
+                return redirect()->route('projects.index');
             }
-
-            // إذا لم ينطبق أي شرط (احتياطياً)
-            return redirect()->intended('dashboard');
         }
 
         return back()->withErrors([
@@ -60,7 +51,6 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

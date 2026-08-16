@@ -12,8 +12,12 @@ class ClientController extends Controller
     public function index()
     {
         $clients = Client::all();
-    $projects = Project::all();
-    return view('clients.index', compact('clients', 'projects'));
+        $projects = Project::all();
+        
+        // جلب أسماء الشركات الفريدة من جدول المشاريع (Projects)
+        $companies = Project::select('company_name')->distinct()->get();
+
+        return view('clients.index', compact('clients', 'projects', 'companies'));
     }
 
     public function store(Request $request)

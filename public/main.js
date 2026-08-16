@@ -1,21 +1,35 @@
+/* ==========================================
+   1. تهيئة الأحداث العامة وتفعيل القائمة الجانبية وتنبيهات الجلسة
+========================================== */
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. تحديد الصفحة الحالية وتفعيل العنصر النشط في القائمة الجانبية تلقائياً
+    // تحديد الصفحة الحالية وتفعيل العنصر النشط في القائمة الجانبية تلقائياً[cite: 1]
     const currentPath = window.location.pathname;
     const navLinks = document.querySelectorAll(".navigation-sidebar .nav-link");
 
     navLinks.forEach(link => {
         link.classList.remove("active");
         const linkHref = link.getAttribute("href");
-        
         if (linkHref && currentPath.includes(linkHref)) {
             link.classList.add("active");
         }
     });
 
-    // 2. إعداد مستمعي الأحداث للتواريخ
+    // عرض رسالة النجاح من الجلسة إن وجدت[cite: 1]
+    if (window.sessionSuccessMessage) {
+        const successModalEl = document.getElementById('successModal');
+        const successTextEl = document.getElementById('successModalText');
+        if (successModalEl) {
+            if (successTextEl) {
+                successTextEl.innerText = window.sessionSuccessMessage;
+            }
+            const successModal = new bootstrap.Modal(successModalEl);
+            successModal.show();
+        }
+    }
+
+    // ربط مستمعي الأحداث لحقول التواريخ[cite: 1]
     const startDateInput = document.getElementById('startDateInput');
     const endDateInput = document.getElementById('endDateInput');
-
     if (startDateInput && endDateInput) {
         startDateInput.addEventListener('change', validateDates);
         endDateInput.addEventListener('change', validateDates);
@@ -23,42 +37,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const projectStartDateInput = document.getElementById('projectStartDateInput');
     const projectEndDateInput = document.getElementById('projectEndDateInput');
-
     if (projectStartDateInput && projectEndDateInput) {
         projectStartDateInput.addEventListener('change', validateDates);
         projectEndDateInput.addEventListener('change', validateDates);
     }
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-    const projectStartDateInput = document.getElementById('projectStartDateInput');
-    const projectEndDateInput = document.getElementById('projectEndDateInput');
-
-    if (projectStartDateInput && projectEndDateInput) {
-        // دالة التحقق وتحديث الحد الأدنى لتاريخ النهاية
-        function validateDates() {
-            const startDate = projectStartDateInput.value;
-            const endDate = projectEndDateInput.value;
-
-            if (startDate) {
-                // منع تاريخ النهاية أن يكون أقل من تاريخ البدء
-                projectEndDateInput.min = startDate;
-
-                // إذا كان تاريخ النهاية الحالي أقدم من تاريخ البدء الجديد، احذفه
-                if (endDate && endDate < startDate) {
-                    projectEndDateInput.value = '';
-                    alert('تاريخ الانتهاء يجب أن يكون بعد أو مساوياً لتاريخ البدء.');
-                }
-            }
-        }
-
-        // الاستماع لأي تغيير يحدث في الحقلين
-        projectStartDateInput.addEventListener('change', validateDates);
-        projectEndDateInput.addEventListener('change', validateDates);
-    }
-});
 /* ==========================================
-   إدارة عمليات المشاريع (Projects Operations)
+   2. إدارة عمليات المشاريع (Projects Operations)[cite: 1]
 ========================================== */
 function prepareAddProjectModal(storeUrl) {
     const modalTitle = document.getElementById('projectModalTitle');
@@ -132,7 +118,10 @@ function openDeleteProjectModal(button, deleteUrl) {
     }
 }
 
-/* js task page */
+/* ==========================================
+   3. إدارة المهام والتواريخ (Tasks & Validations)[cite: 1]
+========================================== */
+// دالة موحدة للتحقق من التواريخ (تم دمج تكرارات validateDates في دالة واحدة)[cite: 1]
 function validateDates() {
     const startDateInput = document.getElementById('startDateInput');
     const endDateInput = document.getElementById('endDateInput');
@@ -141,6 +130,17 @@ function validateDates() {
         endDateInput.min = startDateInput.value;
         if (endDateInput.value && endDateInput.value < startDateInput.value) {
             endDateInput.value = startDateInput.value;
+        }
+    }
+
+    const projectStartDateInput = document.getElementById('projectStartDateInput');
+    const projectEndDateInput = document.getElementById('projectEndDateInput');
+    
+    if (projectStartDateInput && projectEndDateInput && projectStartDateInput.value) {
+        projectEndDateInput.min = projectStartDateInput.value;
+        if (projectEndDateInput.value && projectEndDateInput.value < projectStartDateInput.value) {
+            projectEndDateInput.value = '';
+            alert('تاريخ الانتهاء يجب أن يكون بعد أو مساوياً لتاريخ البدء.');
         }
     }
 }
@@ -157,7 +157,6 @@ function prepareAddModal() {
     }
     if (methodInput) methodInput.value = "POST";
 
-    // إزالة قيود التتواريخ عند الإضافة الجديدة لحين اختيار المشروع
     const startDateInput = document.getElementById('startDateInput');
     const endDateInput = document.getElementById('endDateInput');
     if (startDateInput) { startDateInput.removeAttribute('min'); startDateInput.removeAttribute('max'); }
@@ -176,8 +175,6 @@ function openEditModal(button) {
     const startDate = taskCard.getAttribute('data-start-date') || '';
     const endDate = taskCard.getAttribute('data-end-date') || '';
     const status = taskCard.getAttribute('data-status') || '';
-    
-    // إذا كنتِ تخزنين اسم الشركة داخل الـ Task Card أو تجلبينه عبر المشروع
     const companyName = taskCard.getAttribute('data-company') || '';
 
     const modalTitle = document.getElementById('taskModalTitle');
@@ -192,7 +189,7 @@ function openEditModal(button) {
     
     if (document.getElementById('projectIdInput')) {
         document.getElementById('projectIdInput').value = projectId;
-        updateProjectDatesLimits(); // لتحديث التواريخ والشركة تلقائياً بناءً على المشروع المحدد
+        updateProjectDatesLimits();
     }
 
     if (document.getElementById('companyNameInput') && companyName) {
@@ -213,9 +210,7 @@ function openEditModal(button) {
     const modalEl = document.getElementById('taskModal');
     if (modalEl) {
         let modalInstance = bootstrap.Modal.getInstance(modalEl);
-        if (!modalInstance) {
-            modalInstance = new bootstrap.Modal(modalEl);
-        }
+        if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
         modalInstance.show();
     }
 }
@@ -236,14 +231,45 @@ function openDeleteModal(button) {
     const modalEl = document.getElementById('deleteModal');
     if (modalEl) {
         let modalInstance = bootstrap.Modal.getInstance(modalEl);
-        if (!modalInstance) {
-            modalInstance = new bootstrap.Modal(modalEl);
-        }
+        if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
         modalInstance.show();
     }
 }
 
-/* js Client  */
+function updateProjectDatesLimits() {
+    const projectSelect = document.getElementById('projectIdInput');
+    if (!projectSelect) return;
+    
+    const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+    const startDateInput = document.getElementById('startDateInput');
+    const endDateInput = document.getElementById('endDateInput');
+
+    if (!startDateInput || !endDateInput) return;
+
+    if (selectedOption && selectedOption.value) {
+        const projectStart = selectedOption.getAttribute('data-start');
+        const projectEnd = selectedOption.getAttribute('data-end');
+
+        startDateInput.min = projectStart;
+        startDateInput.max = projectEnd;
+        endDateInput.min = projectStart;
+        endDateInput.max = projectEnd;
+
+        startDateInput.value = '';
+        endDateInput.value = '';
+    } else {
+        startDateInput.value = '';
+        endDateInput.value = '';
+        startDateInput.min = '';
+        startDateInput.max = '';
+        endDateInput.min = '';
+        endDateInput.max = '';
+    }
+}
+
+/* ==========================================
+   4. إدارة العملاء (Clients Operations)[cite: 1]
+========================================== */
 function prepareAddClientModal(storeUrl) {
     const modalTitle = document.getElementById('clientModalTitle');
     const clientForm = document.getElementById('clientForm');
@@ -274,11 +300,11 @@ function openEditClientModal(button, updateUrl) {
     if (methodInput) methodInput.value = "PUT";
 
     if (clientCard) {
-        document.getElementById('clientNameInput').value = clientCard.getAttribute('data-client-name') || '';
-        document.getElementById('companyNameInput').value = clientCard.getAttribute('data-company-name') || '';
-        document.getElementById('clientEmailInput').value = clientCard.getAttribute('data-client-email') || '';
-        document.getElementById('clientPhoneInput').value = clientCard.getAttribute('data-client-phone') || '';
-        document.getElementById('clientProjectInput').value = clientCard.getAttribute('data-client-project') || '';
+        if (document.getElementById('clientNameInput')) document.getElementById('clientNameInput').value = clientCard.getAttribute('data-client-name') || '';
+        if (document.getElementById('companyNameInput')) document.getElementById('companyNameInput').value = clientCard.getAttribute('data-company-name') || '';
+        if (document.getElementById('clientEmailInput')) document.getElementById('clientEmailInput').value = clientCard.getAttribute('data-client-email') || '';
+        if (document.getElementById('clientPhoneInput')) document.getElementById('clientPhoneInput').value = clientCard.getAttribute('data-client-phone') || '';
+        if (document.getElementById('clientProjectInput')) document.getElementById('clientProjectInput').value = clientCard.getAttribute('data-client-project') || '';
     }
 
     const modalEl = document.getElementById('clientModal');
@@ -307,21 +333,8 @@ function openDeleteClientModal(button, deleteUrl) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.sessionSuccessMessage) {
-        const successModalEl = document.getElementById('successModal');
-        const successTextEl = document.getElementById('successModalText');
-        if (successModalEl) {
-            if (successTextEl) {
-                successTextEl.innerText = window.sessionSuccessMessage;
-            }
-            const successModal = new bootstrap.Modal(successModalEl);
-            successModal.show();
-        }
-    }
-});
 /* ==========================================
-    Login Page JS
+   5. صفحة تسجيل الدخول واستعادة كلمة المرور[cite: 1]
 ========================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
@@ -333,9 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (usernameInput && localStorage.getItem('savedUsername')) {
         usernameInput.value = localStorage.getItem('savedUsername');
-        if (rememberMeCheckbox) {
-            rememberMeCheckbox.checked = true;
-        }
+        if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
     }
 
     if (loginForm) {
@@ -345,7 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = usernameInput ? usernameInput.value.trim() : '';
             const password = passwordInput ? passwordInput.value.trim() : '';
             
-            // تعديل النمط ليقبل إيميل الشركة أو أي بريد إلكتروني صالح (للعملاء)
             const fvsPattern = /^[a-zA-Z0-9._%+-]+@fvs\.com\.sa$/;
             const generalEmailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -355,7 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // التحقق مما إذا كان البريد إما ينتمي لشركة fvs أو بريد إلكتروني صحيح (للعميل)
             if (!fvsPattern.test(username) && !generalEmailPattern.test(username)) {
                 e.preventDefault();
                 showError(usernameInput, usernameError, 'يرجى إدخال بريد إلكتروني صحيح');
@@ -398,9 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-/* ==========================================
-   Forgot Password Logic
-========================================== */
 document.addEventListener('DOMContentLoaded', () => {
     const resetForm = document.getElementById('resetForm');
     const emailInput = document.getElementById('emailInput');
@@ -445,10 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-
-
 /* ==========================================
-   إدارة الملف الشخصي
+   6. إدارة الملف الشخصي (Profile Management)[cite: 1]
 ========================================== */
 function handleProfileSubmit(event) {
     event.preventDefault();
@@ -516,110 +520,11 @@ function confirmDeleteAccount() {
         const deleteModalInstance = bootstrap.Modal.getInstance(deleteModalEl);
         if (deleteModalInstance) deleteModalInstance.hide();
     }
-    
     showStatusMessage("تم حذف الحساب بنجاح");
 }
-/* ==========================================
-   إعدادات اللغة والترجمة
-========================================== */
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. تفعيل زر الإشعارات وإرسال التحديث لقاعدة البيانات
-    const emailNotifToggle = document.getElementById('emailNotifToggle');
-    if (emailNotifToggle) {
-        emailNotifToggle.addEventListener('change', function() {
-            const isChecked = this.checked;
-
-            fetch(window.settingsRoutes.notifications, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                },
-                body: JSON.stringify({ email_notifications: isChecked })
-            })
-            .then(async response => {
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    showStatusMessage(data.message || "تم تحديث إعدادات الإشعارات بنجاح");
-                } else {
-                    alert(data.message || 'حدث خطأ أثناء تحديث الإشعارات.');
-                    emailNotifToggle.checked = !isChecked; // إرجاع الزر للحالة السابقة عند الخطأ
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ في الاتصال بالخادم.');
-                emailNotifToggle.checked = !isChecked;
-            });
-        });
-    }
-
-    // 2. نموذج تغيير كلمة المرور والتحقق منها وإرسالها للسيرفر
-    const passwordChangeForm = document.getElementById('passwordChangeForm');
-    const confirmPass = document.getElementById('confirmPassInput');
-
-    if (confirmPass) {
-        confirmPass.addEventListener('input', () => {
-            confirmPass.setCustomValidity('');
-        });
-    }
-
-    if (passwordChangeForm) {
-        passwordChangeForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const currentPass = document.getElementById('currentPassInput').value.trim();
-            const newPass = document.getElementById('newPassInput').value.trim();
-            const confirmPassInput = document.getElementById('confirmPassInput');
-            const confirmPassValue = confirmPassInput.value.trim();
-
-            if (newPass !== confirmPassValue) {
-                const currentLang = localStorage.getItem('preferredLang') || 'ar';
-                const errorMsg = currentLang === 'en' 
-                    ? 'Passwords do not match.' 
-                    : 'كلمتا المرور غير متطابقتين.';
-
-                confirmPassInput.setCustomValidity(errorMsg);
-                confirmPassInput.reportValidity();
-                return;
-            }
-
-            // إرسال الطلب للسيرفر لتغيير كلمة المرور بشكل حقيقي
-            fetch(window.settingsRoutes.passwordUpdate, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-                },
-                body: JSON.stringify({
-                    current_password: currentPass,
-                    new_password: newPass,
-                    new_password_confirmation: confirmPassValue
-                })
-            })
-            .then(async response => {
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    showStatusMessage(data.message || "تم تحديث كلمة المرور بنجاح");
-                    passwordChangeForm.reset();
-                } else {
-                    alert(data.message || 'حدث خطأ أثناء تحديث كلمة المرور.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ في الاتصال بالخادم.');
-            });
-        });
-    }
-
-    // تحميل لغة الواجهة المحفوظة
-    const savedLang = localStorage.getItem('preferredLang') || 'ar';
-    changeLanguage(savedLang);
-});
 
 /* ==========================================
-   إعدادات اللغة والترجمة
+   7. الإعدادات، اللغة والترجمة، والإشعارات[cite: 1]
 ========================================== */
 const translations = {
     ar: {
@@ -656,10 +561,102 @@ const translations = {
     }
 };
 
+document.addEventListener('DOMContentLoaded', () => {
+    const emailNotifToggle = document.getElementById('emailNotifToggle');
+    if (emailNotifToggle && window.settingsRoutes && window.settingsRoutes.notifications) {
+        emailNotifToggle.addEventListener('change', function() {
+            const isChecked = this.checked;
+
+            fetch(window.settingsRoutes.notifications, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({ email_notifications: isChecked })
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatusMessage(data.message || "تم تحديث إعدادات الإشعارات بنجاح");
+                } else {
+                    alert(data.message || 'حدث خطأ أثناء تحديث الإشعارات.');
+                    emailNotifToggle.checked = !isChecked;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال بالخادم.');
+                emailNotifToggle.checked = !isChecked;
+            });
+        });
+    }
+
+    const passwordChangeForm = document.getElementById('passwordChangeForm');
+    const confirmPass = document.getElementById('confirmPassInput');
+
+    if (confirmPass) {
+        confirmPass.addEventListener('input', () => {
+            confirmPass.setCustomValidity('');
+        });
+    }
+
+    if (passwordChangeForm && window.settingsRoutes && window.settingsRoutes.passwordUpdate) {
+        passwordChangeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const currentPass = document.getElementById('currentPassInput').value.trim();
+            const newPass = document.getElementById('newPassInput').value.trim();
+            const confirmPassInput = document.getElementById('confirmPassInput');
+            const confirmPassValue = confirmPassInput.value.trim();
+
+            if (newPass !== confirmPassValue) {
+                const currentLang = localStorage.getItem('preferredLang') || 'ar';
+                const errorMsg = currentLang === 'en' 
+                    ? 'Passwords do not match.' 
+                    : 'كلمتا المرور غير متطابقتين.';
+
+                confirmPassInput.setCustomValidity(errorMsg);
+                confirmPassInput.reportValidity();
+                return;
+            }
+
+            fetch(window.settingsRoutes.passwordUpdate, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                },
+                body: JSON.stringify({
+                    current_password: currentPass,
+                    new_password: newPass,
+                    new_password_confirmation: confirmPassValue
+                })
+            })
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    showStatusMessage(data.message || "تم تحديث كلمة المرور بنجاح");
+                    passwordChangeForm.reset();
+                } else {
+                    alert(data.message || 'حدث خطأ أثناء تحديث كلمة المرور.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال بالخادم.');
+            });
+        });
+    }
+
+    const savedLang = localStorage.getItem('preferredLang') || 'ar';
+    changeLanguage(savedLang);
+});
+
 function changeLanguage(lang) {
     localStorage.setItem('preferredLang', lang);
 
-    const htmlRoot = document.documentElement; // استبدل بـ document.documentElement لضمان الوصول لجذر الصفحة
+    const htmlRoot = document.documentElement;
     const bootstrapCSS = document.getElementById('bootstrapCSS');
     const langBadge = document.getElementById('currentLangBadge');
 
@@ -667,16 +664,12 @@ function changeLanguage(lang) {
         if (lang === 'en') {
             htmlRoot.setAttribute('lang', 'en');
             htmlRoot.setAttribute('dir', 'ltr');
-            if (bootstrapCSS) {
-                bootstrapCSS.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css";
-            }
+            if (bootstrapCSS) bootstrapCSS.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css";
             if (langBadge) langBadge.textContent = translations.en.currentLangText;
         } else {
             htmlRoot.setAttribute('lang', 'ar');
             htmlRoot.setAttribute('dir', 'rtl');
-            if (bootstrapCSS) {
-                bootstrapCSS.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css";
-            }
+            if (bootstrapCSS) bootstrapCSS.href = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css";
             if (langBadge) langBadge.textContent = translations.ar.currentLangText;
         }
     }
@@ -708,7 +701,7 @@ function updateActiveLanguageButtons(lang) {
 }
 
 /* ==========================================
-   دالة عرض رسائل النجاح والتنبيه الموحدة
+   8. الدوال الموحدة (رسائل الحالة والإشعارات)[cite: 1]
 ========================================== */
 function showStatusMessage(message) {
     const messageElement = document.getElementById('statusModalMessage');
@@ -719,16 +712,13 @@ function showStatusMessage(message) {
     const modalEl = document.getElementById('statusMessageModal');
     if (modalEl) {
         const existingModal = bootstrap.Modal.getInstance(modalEl);
-        if (existingModal) {
-            existingModal.hide();
-        }
+        if (existingModal) existingModal.hide();
         
         const statusModal = new bootstrap.Modal(modalEl);
         statusModal.show();
     }
 }
 
-// js notification
 function markNotificationsAsRead() {
     let url = window.notificationsReadUrl || '/notifications/read';
 
@@ -752,88 +742,95 @@ function markNotificationsAsRead() {
     .catch(error => console.error('Error:', error));
 }
 
-// js "tasks faield "
-function updateProjectDatesLimits() {
-        const projectSelect = document.getElementById('projectIdInput');
-        const selectedOption = projectSelect.options[projectSelect.selectedIndex];
-        
-        const startDateInput = document.getElementById('startDateInput');
-        const endDateInput = document.getElementById('endDateInput');
-
-        if (selectedOption && selectedOption.value) {
-            const projectStart = selectedOption.getAttribute('data-start');
-            const projectEnd = selectedOption.getAttribute('data-end');
-
-            // تحديد أقل وأقصى تاريخ مسموح به لحقل البدء والانتهاء بناءً على المشروع
-            startDateInput.min = projectStart;
-            startDateInput.max = projectEnd;
-
-            endDateInput.min = projectStart;
-            endDateInput.max = projectEnd;
-
-            // تفريغ الحقول عند تغيير المشروع لتجنب بقاء تواريخ قديمة غير متوافقة
-            startDateInput.value = '';
-            endDateInput.value = '';
-        } else {
-            startDateInput.value = '';
-            endDateInput.value = '';
-            startDateInput.min = '';
-            startDateInput.max = '';
-            endDateInput.min = '';
-            endDateInput.max = '';
-        }
-    }
-
-    // ربط تاريخ انتهاء المهمة بحيث لا يقل عن تاريخ بدء المهمة المحدد
-    document.getElementById('startDateInput').addEventListener('change', function() {
-        const startDate = this.value;
-        const endDateInput = document.getElementById('endDateInput');
-        
-        if (startDate) {
-            // الحد الأدنى لتاريخ الانتهاء يصبح هو نفس تاريخ البدء المختار للمهمة
-            endDateInput.min = startDate;
-            if (endDateInput.value && endDateInput.value < startDate) {
-                endDateInput.value = startDate;
-            }
-        }
-    });
 /* ==========================================
-    إدارة التعليقات (Comments Operations - Backend)
+   9. قسم التعليقات (Comments Section)[cite: 1]
 ========================================== */
-
 let attachedFiles = [];
-const MAX_ATTACHMENTS = 3; // الحد الأقصى المسموح به إجمالاً (ملفات أو صور)
+const MAX_ATTACHMENTS = 3; 
 
 function prepareAddComment(formId) {
     const commentForm = document.getElementById(formId);
     if (commentForm) {
         commentForm.reset();
         attachedFiles = [];
-        renderAttachmentsPreview();
+        updateAttachmentsPreview();
     }
 }
 
-function openEditCommentModal(commentId, currentContent, updateUrl) {
-    const commentInput = document.getElementById('editCommentInput');
-    const commentForm = document.getElementById('editCommentForm');
+// دالة موحدة ومتكاملة لتعديل التعليق (تدمج النسخ المتعددة لـ openEditCommentModal)[cite: 1]
+function openEditCommentModal(button, url) {
+    const commentItem = button.closest('.comment-item');
+    if (!commentItem) return;
 
-    if (commentInput) commentInput.value = currentContent;
-    if (commentForm && updateUrl) commentForm.action = updateUrl;
+    const commentText = commentItem.getAttribute('data-comment-text') || commentItem.querySelector('.comment-content')?.innerText || '';
+    const commentAttachment = commentItem.getAttribute('data-attachment') || '';
+    
+    const editInput = document.getElementById('editCommentInput');
+    const editForm = document.getElementById('editCommentForm');
+    const editAttachmentInput = document.getElementById('editAttachmentInput');
+    const removeAttachmentFlag = document.getElementById('removeAttachmentFlag');
+
+    if (editInput) editInput.value = commentText.trim();
+    if (editForm && url) editForm.action = url;
+    if (editAttachmentInput) editAttachmentInput.value = '';
+    if (removeAttachmentFlag) removeAttachmentFlag.value = '0';
+
+    const editFileBox = document.getElementById('editFilePreviewBox');
+    const editImageBox = document.getElementById('editImagePreviewBox');
+    const editFileNameText = document.getElementById('editFileNameText');
+    const editImageThumbnail = document.getElementById('editImageThumbnail');
+    const noAttachmentAddBox = document.getElementById('noAttachmentAddBox');
+    const removeAttachmentActionBox = document.getElementById('removeAttachmentActionBox');
+    const editAttachmentLabel = document.getElementById('editAttachmentLabel');
+    const addOrChangeBtnText = document.getElementById('addOrChangeBtnText');
+
+    if (editFileBox && editImageBox && noAttachmentAddBox && removeAttachmentActionBox && editAttachmentLabel) {
+        if (commentAttachment && commentAttachment !== '' && commentAttachment !== 'null') {
+            const fileName = commentAttachment.split('/').pop();
+            const extension = fileName.split('.').pop().toLowerCase();
+            const isImage = ['jpg', 'jpeg', 'png', 'gif'].includes(extension);
+            const fullPath = window.assetStorageBaseUrl ? `${window.assetStorageBaseUrl}/${commentAttachment}` : `/storage/${commentAttachment}`;
+
+            editAttachmentLabel.textContent = "المرفق الحالي:";
+            if (isImage && editImageThumbnail) {
+                editImageThumbnail.src = fullPath;
+                editImageBox.classList.remove('d-none');
+                editFileBox.classList.add('d-none');
+            } else {
+                if (editFileNameText) editFileNameText.textContent = fileName;
+                editFileBox.classList.remove('d-none');
+                editImageBox.classList.add('d-none');
+            }
+            noAttachmentAddBox.classList.add('d-none');
+            removeAttachmentActionBox.classList.remove('d-none');
+        } else {
+            editAttachmentLabel.textContent = "إرفاق ملف أو صورة (اختياري):";
+            editFileBox.classList.add('d-none');
+            editImageBox.classList.add('d-none');
+            noAttachmentAddBox.classList.remove('d-none');
+            removeAttachmentActionBox.classList.add('d-none');
+            if (addOrChangeBtnText) addOrChangeBtnText.textContent = "إضافة ملف أو صورة مع التعديل";
+        }
+    }
 
     const modalEl = document.getElementById('editCommentModal');
     if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
+        let modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) modal = new bootstrap.Modal(modalEl);
         modal.show();
     }
 }
 
-function openDeleteCommentModal(deleteUrl) {
+// دالة موحدة لحذف التعليق (تم دمج التكرارات)[cite: 1]
+function openDeleteCommentModal(button, url) {
     const deleteForm = document.getElementById('deleteCommentForm');
-    if (deleteForm && deleteUrl) deleteForm.action = deleteUrl;
-
+    if (deleteForm && url) {
+        deleteForm.action = url;
+    }
     const modalEl = document.getElementById('deleteCommentModal');
     if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
+        let modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) modal = new bootstrap.Modal(modalEl);
         modal.show();
     }
 }
@@ -882,7 +879,23 @@ function handleImageSelect(event) {
 
 function removeAttachment(index) {
     attachedFiles.splice(index, 1);
-    renderAttachmentsPreview();
+    updateAttachmentsPreview();
+}
+
+function updateAttachmentsPreview() {
+    const previewContainer = document.getElementById('attachmentsPreview');
+    if (!previewContainer) return;
+
+    previewContainer.innerHTML = '';
+    attachedFiles.forEach((file, index) => {
+        const fileBadge = document.createElement('div');
+        fileBadge.className = 'badge bg-secondary d-flex align-items-center gap-2 p-2';
+        fileBadge.innerHTML = `
+            <span>${file.name}</span>
+            <button type="button" class="btn-close btn-close-white btn-sm" onclick="removeAttachment(${index})"></button>
+        `;
+        previewContainer.appendChild(fileBadge);
+    });
 }
 
 function renderAttachmentsPreview() {
@@ -907,7 +920,6 @@ function handleCommentSubmit(event) {
     const textInput = document.getElementById('commentTextInput');
     const commentText = textInput ? textInput.value.trim() : '';
 
-    // التحقق من أن التعليق أو الملفات ليست فارغة تماماً
     if (!commentText && attachedFiles.length === 0) {
         event.preventDefault();
         if (textInput) {
@@ -918,7 +930,6 @@ function handleCommentSubmit(event) {
         return false;
     }
 
-    // نقل الملف المرفق من المصفوفة إلى حقل الـ File المخفي في الفورم
     if (attachedFiles.length > 0) {
         const fileInput = document.getElementById('attachmentInput');
         const dataTransfer = new DataTransfer();
@@ -926,96 +937,150 @@ function handleCommentSubmit(event) {
         fileInput.files = dataTransfer.files;
     }
 
-    return true; // السماح بإرسال الفورم بالشكل الطبيعي
+    return true;
 }
 
-// دالة إظهار اسم الملف أو الصورة المختارة للمعاينة
-function showFileName(input, previewId, textId) {
-    const preview = document.getElementById(previewId);
-    const text = document.getElementById(textId);
+// دوال معاينة الملفات (تم دمج التكرارات في دالة واحدة موحدة)[cite: 1]
+function showFileName(input, previewId, nameTextId) {
     if (input.files && input.files[0]) {
-        text.textContent = input.files[0].name;
-        preview.classList.remove('d-none');
-        preview.classList.add('d-flex');
+        const textEl = document.getElementById(nameTextId);
+        if (textEl) textEl.textContent = input.files[0].name;
+        const previewEl = document.getElementById(previewId);
+        if (previewEl) {
+            previewEl.classList.remove('d-none');
+            previewEl.classList.add('d-flex');
+        }
     }
 }
 
-// دالة إلغاء وتفريغ الملف أو الصورة المختارة
 function removeFile(inputId, previewId) {
     const input = document.getElementById(inputId);
+    if (input) input.value = '';
     const preview = document.getElementById(previewId);
-    input.value = '';
-    preview.classList.remove('d-flex');
-    preview.classList.add('d-none');
+    if (preview) {
+        preview.classList.add('d-none');
+        preview.classList.remove('d-flex');
+    }
 }
 
-// js of Employee 
+function showEditPreview(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const isImage = file.type.startsWith('image/');
+        
+        const editFileBox = document.getElementById('editFilePreviewBox');
+        const editImageBox = document.getElementById('editImagePreviewBox');
+        const editFileNameText = document.getElementById('editFileNameText');
+        const editImageThumbnail = document.getElementById('editImageThumbnail');
+        const noAttachmentAddBox = document.getElementById('noAttachmentAddBox');
+        const removeAttachmentActionBox = document.getElementById('removeAttachmentActionBox');
+        const editAttachmentLabel = document.getElementById('editAttachmentLabel');
+        
+        document.getElementById('removeAttachmentFlag').value = '0';
+        editAttachmentLabel.textContent = "المرفق الجديد:";
+
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (editImageThumbnail) editImageThumbnail.src = e.target.result;
+                if (editImageBox) editImageBox.classList.remove('d-none');
+                if (editFileBox) editFileBox.classList.add('d-none');
+            }
+            reader.readAsDataURL(file);
+        } else {
+            if (editFileNameText) editFileNameText.textContent = file.name;
+            if (editFileBox) editFileBox.classList.remove('d-none');
+            if (editImageBox) editImageBox.classList.add('d-none');
+        }
+        if (noAttachmentAddBox) noAttachmentAddBox.classList.add('d-none');
+        if (removeAttachmentActionBox) removeAttachmentActionBox.classList.remove('d-none');
+    }
+}
+
+function removeCurrentAttachment() {
+    const editAttachmentInput = document.getElementById('editAttachmentInput');
+    const removeAttachmentFlag = document.getElementById('removeAttachmentFlag');
+    if (editAttachmentInput) editAttachmentInput.value = '';
+    if (removeAttachmentFlag) removeAttachmentFlag.value = '1';
+    
+    const editFileBox = document.getElementById('editFilePreviewBox');
+    const editImageBox = document.getElementById('editImagePreviewBox');
+    const noAttachmentAddBox = document.getElementById('noAttachmentAddBox');
+    const removeAttachmentActionBox = document.getElementById('removeAttachmentActionBox');
+    const editAttachmentLabel = document.getElementById('editAttachmentLabel');
+    const addOrChangeBtnText = document.getElementById('addOrChangeBtnText');
+
+    if (editFileBox) editFileBox.classList.add('d-none');
+    if (editImageBox) editImageBox.classList.add('d-none');
+    if (removeAttachmentActionBox) removeAttachmentActionBox.classList.add('d-none');
+    if (noAttachmentAddBox) noAttachmentAddBox.classList.remove('d-none');
+    if (editAttachmentLabel) editAttachmentLabel.textContent = "إرفاق ملف أو صورة (اختياري):";
+    if (addOrChangeBtnText) addOrChangeBtnText.textContent = "إضافة ملف أو صورة جديدة";
+}
+
+/* ==========================================
+   10. إدارة الموظفين (Employee Operations)[cite: 1]
+========================================== */
 function prepareAddEmployeeModal(storeRoute) {
-        document.getElementById('employeeModalTitle').innerText = 'إضافة موظف جديد';
-        document.getElementById('employeeForm').action = storeRoute;
-        document.getElementById('employeeFormMethod').value = 'POST';
-        document.getElementById('employeeNameInput').value = '';
-        document.getElementById('departmentInput').value = '';
-        document.getElementById('employeeEmailInput').value = '';
-        document.getElementById('employeePhoneInput').value = '';
-        
-        var myModal = new bootstrap.Modal(document.getElementById('employeeModal'));
-        myModal.show();
-    }
+    document.getElementById('employeeModalTitle').innerText = 'إضافة موظف جديد';
+    document.getElementById('employeeForm').action = storeRoute;
+    document.getElementById('employeeFormMethod').value = 'POST';
+    document.getElementById('employeeNameInput').value = '';
+    document.getElementById('departmentInput').value = '';
+    document.getElementById('employeeEmailInput').value = '';
+    document.getElementById('employeePhoneInput').value = '';
+    
+    var myModal = new bootstrap.Modal(document.getElementById('employeeModal'));
+    myModal.show();
+}
 
-    function openEditEmployeeModal(button, updateRoute) {
-        var wrapper = button.closest('.employee-card-wrapper');
-        var name = wrapper.getAttribute('data-employee-name');
-        var department = wrapper.getAttribute('data-department');
-        var email = wrapper.getAttribute('data-employee-email');
-        var phone = wrapper.getAttribute('data-employee-phone');
+function openEditEmployeeModal(button, updateRoute) {
+    var wrapper = button.closest('.employee-card-wrapper');
+    var name = wrapper.getAttribute('data-employee-name');
+    var department = wrapper.getAttribute('data-department');
+    var email = wrapper.getAttribute('data-employee-email');
+    var phone = wrapper.getAttribute('data-employee-phone');
 
-        document.getElementById('employeeModalTitle').innerText = 'تعديل بيانات الموظف';
-        document.getElementById('employeeForm').action = updateRoute;
-        document.getElementById('employeeFormMethod').value = 'PUT';
-        document.getElementById('employeeNameInput').value = name;
-        document.getElementById('departmentInput').value = department;
-        document.getElementById('employeeEmailInput').value = email;
-        document.getElementById('employeePhoneInput').value = phone;
+    document.getElementById('employeeModalTitle').innerText = 'تعديل بيانات الموظف';
+    document.getElementById('employeeForm').action = updateRoute;
+    document.getElementById('employeeFormMethod').value = 'PUT';
+    document.getElementById('employeeNameInput').value = name;
+    document.getElementById('departmentInput').value = department;
+    document.getElementById('employeeEmailInput').value = email;
+    document.getElementById('employeePhoneInput').value = phone;
 
-        var myModal = new bootstrap.Modal(document.getElementById('employeeModal'));
-        myModal.show();
-    }
+    var myModal = new bootstrap.Modal(document.getElementById('employeeModal'));
+    myModal.show();
+}
 
-    function openDeleteEmployeeModal(button, destroyRoute) {
-        var wrapper = button.closest('.employee-card-wrapper');
-        var name = wrapper.getAttribute('data-employee-name');
-        
-        document.getElementById('deleteEmployeeModalText').innerText = 'هل تريد حذف الموظف (' + name + ')؟';
-        document.getElementById('deleteEmployeeForm').action = destroyRoute;
+function openDeleteEmployeeModal(button, destroyRoute) {
+    var wrapper = button.closest('.employee-card-wrapper');
+    var name = wrapper.getAttribute('data-employee-name');
+    
+    document.getElementById('deleteEmployeeModalText').innerText = 'هل تريد حذف الموظف (' + name + ')؟';
+    document.getElementById('deleteEmployeeForm').action = destroyRoute;
 
-        var myModal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
-        myModal.show();
-    }
+    var myModal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+    myModal.show();
+}
 
-      function openEmployeeProjectStatusModal(projectId, currentStatus, updateUrl) {
-        const form = document.getElementById('employeeProjectStatusForm');
-        form.action = updateUrl;
-        document.getElementById('employeeProjectStatusSelect').value = currentStatus;
-        
-        var myModal = new bootstrap.Modal(document.getElementById('employeeProjectStatusModal'));
-        myModal.show();
-    }
+function openEmployeeProjectStatusModal(projectId, currentStatus, updateUrl) {
+    const form = document.getElementById('employeeProjectStatusForm');
+    if (form) form.action = updateUrl;
+    const statusSelect = document.getElementById('employeeProjectStatusSelect');
+    if (statusSelect) statusSelect.value = currentStatus;
+    
+    var myModal = new bootstrap.Modal(document.getElementById('employeeProjectStatusModal'));
+    myModal.show();
+}
 
-    function openEmployeeTaskStatusModal(taskId, currentStatus, updateUrl) {
-        const form = document.getElementById('employeeTaskStatusForm');
-        form.action = updateUrl;
-        document.getElementById('employeeTaskStatusSelect').value = currentStatus;
-        
-        var myModal = new bootstrap.Modal(document.getElementById('employeeTaskStatusModal'));
-        myModal.show();
-    }
-
-     function openEmployeeTaskStatusModal(taskId, currentStatus, updateUrl) {
-        const form = document.getElementById('employeeTaskStatusForm');
-        form.action = updateUrl;
-        document.getElementById('employeeTaskStatusSelect').value = currentStatus;
-        
-        var myModal = new bootstrap.Modal(document.getElementById('employeeTaskStatusModal'));
-        myModal.show();
-    }
+// دالة موحدة لتحديث حالة مهمة الموظف (تم إزالة التكرار المطابق)[cite: 1]
+function openEmployeeTaskStatusModal(taskId, currentStatus, updateUrl) {
+    const form = document.getElementById('employeeTaskStatusForm');
+    if (form) form.action = updateUrl;
+    const statusSelect = document.getElementById('employeeTaskStatusSelect');
+    if (statusSelect) statusSelect.value = currentStatus;
+    
+    var myModal = new bootstrap.Modal(document.getElementById('employeeTaskStatusModal'));
+    myModal.show();
+}

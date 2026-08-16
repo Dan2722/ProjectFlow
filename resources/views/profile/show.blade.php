@@ -12,7 +12,7 @@
 <!-- نموذج البيانات واقع مباشرة تحت جملة معلوماتي الشخصية -->
 <div class="card custom-modal border p-4 mx-auto" style="max-width: 500px;">
     
-    <!-- الهيدر الداخلي (الصورة الرمزية والاسم والبريد) -->
+   <!-- الهيدر الداخلي (الصورة الرمزية والاسم والبريد) -->
     <div class="d-flex align-items-center gap-3 text-end mb-4">
         <div class="rounded-circle d-flex align-items-center justify-content-center" id="profileCardAvatar" style="width: 48px; height: 48px; background-color: rgba(138, 132, 173, 0.12); color: #8A84AD; font-weight: 600; font-size: 14px;">
             {{ mb_substr($user->username, 0, 2) }}
@@ -21,11 +21,18 @@
             <h3 class="m-0 fw-bold" id="profileCardNameDisplay" style="font-size: 16px; color: #000000;">{{ $user->username }}</h3>
             <span class="text-muted" id="profileCardEmailDisplay" style="font-size: 12px;">{{ $user->email }}</span>
             <div class="mt-1">
-                <span class="client-badge" style="font-size: 11px;">{{ $user->role ?? 'مستخدم' }}</span>
+                <span class="client-badge" style="font-size: 11px;">
+                    @if($user->role === 'client')
+                        عميل
+                    @elseif($user->role === 'employee')
+                        موظف
+                    @else
+                        مدير
+                    @endif
+                </span>
             </div>
         </div>
     </div>
-
     <!-- نموذج التعديل المباشر المربوط بـ Laravel -->
     <form action="{{ route('profile.update') }}" method="POST">
         @csrf

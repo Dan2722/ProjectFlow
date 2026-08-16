@@ -23,6 +23,12 @@
 @endpush
 
 @section('content')
+@php
+    $user = auth()->user();
+    $isClient = $user && $user->role === 'client';
+    $isAdmin = $user && ($user->role === 'admin' || str_contains($user->email, 'adm'));
+@endphp
+
 <!-- رسائل التنبيه والنجاح -->
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show text-start mb-3 rounded-3 shadow-sm py-2 px-3 small" role="alert">
@@ -46,10 +52,10 @@
     </ol>
 </nav>
 
-<!-- عنوان الصفحة وزر إضافة مهمة (يُخفي زر الإضافة عن الموظفة والعميل) -->
+<!-- عنوان الصفحة وزر إضافة مهمة (يُخفي زر الإضافة نهائياً عند تسجيل دخول العميل) -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="task-page-title m-0" id="pageMainTitle">المشاريع</h1>
-    @if(auth()->user()->email !== 'empLayan@fvs.com.sa' && !\App\Models\Client::where('email', auth()->user()->email)->exists())
+    @if(!$isClient)
     <button class="btn btn-add-task d-flex align-items-center gap-2" data-bs-target="#taskModal" data-bs-toggle="modal" onclick="prepareAddModal()">
         <span>إضافة مهمة +</span>
     </button>
@@ -57,7 +63,7 @@
 </div>
 
 @php
-    // مصفوفة خريطة الأيقونات الموحدة لكل الحالات (مطابقة تماماً لصفحة المهام)
+    // مصفوفة خريطة الأيقونات الموحدة لكل الحالات
     $statusIconsMap = [
         'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
         'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard', 'class' => ''],
@@ -67,7 +73,6 @@
         'قيد الانتظار' => ['icon' => 'fa-solid fa-list-check', 'class' => '']
     ];
 
-    // تحديد أيقونة المشروع الرئيسي بناءً على حالته
     $projectStatus = $project->status ?? 'قيد التنفيذ';
     $projectStatusMeta = $statusIconsMap[$projectStatus] ?? ['icon' => 'fa-regular fa-id-badge', 'class' => ''];
 @endphp
@@ -170,27 +175,19 @@
                                         {{ $task->end_task ? \Carbon\Carbon::parse($task->end_task)->translatedFormat('d F Y') : 'غير محدد' }}
                                     </div>
 
-                                  {{-- الأكشنز وفقاً للصلاحيات: الأدمن (تعديل وحذف)، الموظفة (تعديل الحالة فقط)، العميل (لا شيء) --}}
-                                  @if(!\App\Models\Client::where('email', auth()->user()->email)->exists())
                                     <div class="task-actions d-flex align-items-center gap-2" style="font-size: 14px;">
-                                        @if(str_contains(Auth::user()->email, 'adm') || auth()->user()->email !== 'empLayan@fvs.com.sa')
+                                        {{-- أزرار التعديل والحذف للأدمن فقط --}}
+                                        @if($isAdmin)
                                             <button class="btn-icon border-0 bg-transparent p-0" onclick="openEditModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-pen-to-square"></i></button>
-                                            @if(str_contains(Auth::user()->email, 'adm'))
-                                                <button class="btn-icon border-0 bg-transparent p-0" onclick="openDeleteModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-trash-can"></i></button>
-                                            @endif
-                                        @else
-                                            {{-- أيقونة تعديل الحالة الخاصة بالموظف --}}
-                                            <button class="btn-icon border-0 bg-transparent p-0" title="تعديل الحالة" onclick="openEmployeeTaskStatusModal('{{ $task->task_id }}', '{{ $task->status }}', '{{ route('tasks.update', $task->task_id) }}')" style="color: #8A84AD;">
-                                                <i class="fa-regular fa-pen-to-square"></i>
-                                            </button>
+                                            <button class="btn-icon border-0 bg-transparent p-0" onclick="openDeleteModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-trash-can"></i></button>
                                         @endif
 
+                                        {{-- أيقونة وعدد التعليقات تظهر للجميع (بما فيهم العميل) --}}
                                         <div class="d-flex align-items-center gap-1" style="color: #8A84AD;">
                                             <i class="fa-regular fa-comment"></i>
                                             <span style="font-size: 12px;">{{ $task->comments_count ?? ($task->comments ? $task->comments->count() : 0) }}</span>
                                         </div>
                                     </div>
-                                  @endif
                                 </div>
                             </div>
                         @empty
@@ -207,10 +204,9 @@
 @endsection
 
 @push('modals')
-{{-- الموديلات تظهر فقط للأدمن والموظفة، وتُحجب تماماً عن العميل --}}
-@if(!\App\Models\Client::where('email', auth()->user()->email)->exists())
-    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
-    {{-- Modal إضافة / تعديل المهمة (للأدمن فقط) --}}
+{{-- الموديلات تظهر للأدمن فقط للإضافة والتعديل، وتُحجب تماماً عن العميل --}}
+@if(!$isClient)
+    {{-- Modal إضافة / تعديل المهمة --}}
     <div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -295,6 +291,7 @@
     </div>
 
     {{-- Modal الحذف (للأدمن فقط) --}}
+    @if($isAdmin)
     <div aria-hidden="true" class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
             <div class="modal-content custom-modal text-center p-4">
@@ -311,36 +308,5 @@
         </div>
     </div>
     @endif
-
-    {{-- Modal خاص بالموظف لتعديل حالة المهمة فقط --}}
-    <div aria-hidden="true" class="modal fade" id="employeeTaskStatusModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content custom-modal p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="modal-title m-0" style="font-size: 18px; font-weight: 700;">تعديل حالة المهمة</h3>
-                    <button aria-label="Close" class="btn-close m-0" data-bs-dismiss="modal" type="button"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <form id="employeeTaskStatusForm" method="POST">
-                        @csrf
-                        @method('PUT')
-                        <div class="mb-4 text-end">
-                            <label class="custom-label mb-1">حالة المهمة <span class="text-danger">*</span></label>
-                            <select class="form-select custom-input text-center" id="employeeTaskStatusSelect" name="status" required>
-                                <option value="قيد التنفيذ">قيد التنفيذ</option>
-                                <option value="قيد المراجعة">قيد المراجعة</option>
-                                <option value="مكتملة">مكتملة</option>
-                                <option value="متوقف مؤقتاً">متوقف مؤقتاً</option>
-                                <option value="قيد الانتظار">قيد الانتظار</option>
-                            </select>
-                        </div>
-                        <div class="text-center pt-2">
-                            <button class="btn btn-save" type="submit">تحديث الحالة</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 @endif
 @endpush

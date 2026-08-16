@@ -66,7 +66,16 @@
                 $initials = mb_substr($userName, 0, 2);
 
                 $commentEmail = $commentUser->email ?? '';
-                $roleLabel = str_contains($commentEmail, 'emp') ? 'موظف' : 'مدير';
+                
+                if ($commentUser && ($commentUser->role === 'client' || \App\Models\Client::where('email', $commentEmail)->exists())) {
+                    $roleLabel = 'عميل';
+                } elseif ($commentUser && ($commentUser->role === 'employee' || str_contains($commentEmail, 'emp'))) {
+                    $roleLabel = 'موظف';
+                } else {
+                    $roleLabel = 'مدير';
+                }
+
+                $isOwner = ($currentUserId && $comment->user_id === $currentUserId);
 
                 $previousComment = $index > 0 ? $task->comments[$index - 1] : null;
                 $prevUser = $previousComment?->user;
@@ -84,10 +93,23 @@
             @endphp
 
             @if($isSameUser)
-                <div class="comment-item ms-5 ps-2 mb-3">
-                   <div class="text-muted extra-small mb-1">
-                        {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('h:i a') }}
+                <div class="comment-item ms-5 ps-2 mb-3 position-relative" data-comment-text="{{ $comment->comment_text }}" data-attachment="{{ $comment->attachment ?? '' }}">
+                   <div class="d-flex justify-content-between align-items-center mb-1">
+                       <div class="text-muted extra-small">
+                            {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('h:i a') }}
+                       </div>
+                       @if($isOwner)
+                            <div class="d-flex align-items-center gap-3">
+                                <button type="button" class="btn btn-sm btn-link p-0 text-muted" style="color: #8A84AD !important;" onclick="openEditCommentModal(this, '{{ route('comments.update', $comment->id ?? $comment->comment_id) }}')" title="تعديل">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-link p-0 text-muted" style="color: #8A84AD !important;" onclick="openDeleteCommentModal(this, '{{ route('comments.destroy', $comment->id ?? $comment->comment_id) }}')" title="حذف">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+                       @endif
                    </div>
+
                     @if($comment->comment_text)
                         <p class="mb-2 text-dark small">{{ $comment->comment_text }}</p>
                     @endif
@@ -116,17 +138,32 @@
                     @endif
                 </div>
             @else
-                <div class="d-flex gap-3 mb-3 comment-item {{ $index > 0 ? 'border-top pt-3' : '' }}">
+                <div class="d-flex gap-3 mb-3 comment-item {{ $index > 0 ? 'border-top pt-3' : '' }}" data-comment-text="{{ $comment->comment_text }}" data-attachment="{{ $comment->attachment ?? '' }}">
                     <div class="avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="width: 42px; height: 42px; background-color: #8A84AD; flex-shrink: 0;">
                         {{ $initials }}
                     </div>
                     <div class="w-100">
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="fw-bold comment-username">{{ $userName }}</span>
-                            <span class="badge" style="background-color: #8A84AD;">{{ $roleLabel }}</span>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold comment-username">{{ $userName }}</span>
+                                <span class="badge" style="background-color: #8A84AD;">{{ $roleLabel }}</span>
+                            </div>
                         </div>
-                        <div class="text-muted extra-small mb-2">
-                            {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('d F Y, h:i a') }}
+
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="text-muted extra-small">
+                                {{ $comment->created_at->timezone('Asia/Riyadh')->locale('ar')->translatedFormat('d F Y, h:i a') }}
+                            </div>
+                            @if($isOwner)
+                                <div class="d-flex align-items-center gap-3">
+                                    <button type="button" class="btn btn-sm btn-link p-0 text-muted" style="color: #8A84AD !important;" onclick="openEditCommentModal(this, '{{ route('comments.update', $comment->id ?? $comment->comment_id) }}')" title="تعديل">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-link p-0 text-muted" style="color: #8A84AD !important;" onclick="openDeleteCommentModal(this, '{{ route('comments.destroy', $comment->id ?? $comment->comment_id) }}')" title="حذف">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                         
                         @if($comment->comment_text)
@@ -166,19 +203,15 @@
     <!-- Add Comment Form Area -->
     <form id="commentForm" action="{{ route('comments.store', $task->task_id) }}" method="POST" enctype="multipart/form-data">
         @csrf
-        
-        <!-- حقول الملفات والصور المخفية المنفصلة -->
         <input class="d-none" id="attachmentInput" name="attachment" type="file" onchange="showFileName(this, 'filePreview', 'fileNameText')" />
         <input class="d-none" id="imageInput" name="image" type="file" accept="image/*" onchange="showFileName(this, 'imagePreview', 'imageNameText')" />
         
-        <!-- معاينة الملف المختار -->
         <div id="filePreview" class="mb-2 d-none align-items-center gap-2 p-2 border rounded-3 bg-light">
             <i class="fa-solid fa-paperclip text-muted"></i>
             <span id="fileNameText" class="small text-dark fw-bold"></span>
             <button type="button" class="btn-close ms-auto btn-sm" onclick="removeFile('attachmentInput', 'filePreview')"></button>
         </div>
 
-        <!-- معاينة الصورة المختارة -->
         <div id="imagePreview" class="mb-2 d-none align-items-center gap-2 p-2 border rounded-3 bg-light">
             <i class="fa-regular fa-image text-muted"></i>
             <span id="imageNameText" class="small text-dark fw-bold"></span>
@@ -192,7 +225,6 @@
             </button>
         </div>
 
-        <!-- الأزرار -->
         <div class="d-flex gap-2">
             <button class="btn rounded-pill text-white px-3 py-1 small" onclick="document.getElementById('attachmentInput').click();" style="background-color: #8A84AD;" type="button">
                 <i class="fa-solid fa-paperclip me-1"></i> تحميل ملف
@@ -203,4 +235,88 @@
         </div>
     </form>
 </div>
+
+<!-- Modal تعديل التعليق (محدث ليدعم التعليقات بملفات أو بدون ملفات) -->
+<div class="modal fade" id="editCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+            <form id="editCommentForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <div class="modal-body text-start">
+                    <label class="custom-label mb-2">تعديل التعليق</label>
+                    <textarea class="form-control custom-input mb-3" id="editCommentInput" name="comment_text" rows="3" required></textarea>
+                    
+                    <!-- حقل الملف المخفي -->
+                    <input class="d-none" id="editAttachmentInput" name="attachment" type="file" onchange="showEditPreview(this)" />
+                    <input type="hidden" id="removeAttachmentFlag" name="remove_attachment" value="0">
+
+                    <!-- قسم إدارة المرفقات في التعديل -->
+                    <div class="mb-3">
+                        <label class="custom-label mb-2" id="editAttachmentLabel">المرفق:</label>
+                        
+                        <!-- معاينة الملف الحالي -->
+                        <div id="editFilePreviewBox" class="d-none align-items-center gap-2 p-2 border rounded-3 bg-light mb-2" 
+                             style="cursor: pointer;" onclick="document.getElementById('editAttachmentInput').click()" title="اضغط لتغيير الملف">
+                            <i id="editPreviewIcon" class="fa-regular fa-file text-muted"></i>
+                            <span id="editFileNameText" class="small text-dark fw-bold"></span>
+                        </div>
+
+                        <!-- معاينة الصورة الحالية -->
+                        <div id="editImagePreviewBox" class="d-none mb-2" 
+                             style="cursor: pointer;" onclick="document.getElementById('editAttachmentInput').click()" title="اضغط لتغيير الصورة">
+                            <div class="position-relative d-inline-block">
+                                <img id="editImageThumbnail" src="" alt="attachment" class="img-thumbnail rounded-3" style="max-height: 120px;">
+                                <div class="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-50 text-white text-center small p-1">
+                                    اضغط لتغيير الصورة
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- زر إضافة ملف إذا لم يكن هناك مرفق سابق -->
+                        <div id="noAttachmentAddBox">
+                            <button type="button" class="btn rounded-pill w-100 py-2 shadow-none d-flex align-items-center justify-content-center" 
+                                    style="background-color: #ffffff !important; border: 1px solid #ced4da; color: #6c757d !important;"
+                                    onclick="document.getElementById('editAttachmentInput').click()">
+                                <i class="fa-solid fa-paperclip me-2 text-secondary" style="font-size: 0.85rem;"></i>
+                                <span id="addOrChangeBtnText" class="small" style="color: #6c757d;">إضافة ملف أو صورة مع التعديل</span>
+                            </button>
+                        </div>
+
+                        <!-- زر إزالة المرفق الحالي -->
+                        <div id="removeAttachmentActionBox" class="mt-1 d-none">
+                            <button type="button" class="btn btn-link text-danger btn-sm p-0 text-decoration-none small" onclick="removeCurrentAttachment()">
+                                <i class="fa-regular fa-trash-can me-1"></i> إزالة المرفق الحالي
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-center mt-3">
+                        <button type="submit" class="btn btn-save btn-sm px-3 py-1">حفظ التعديلات</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تأكيد حذف التعليق -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal">
+            <form id="deleteCommentForm" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="modal-body text-center">
+                    <p class="delete-text mb-4">هل أنت متأكد من حذف هذا التعليق؟</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="button" class="btn btn-delete-cancel" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-delete-confirm">حذف</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection

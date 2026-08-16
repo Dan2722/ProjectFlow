@@ -3,12 +3,19 @@
 @section('content-class', 'p-4 flex-grow-1')
 
 @section('content')
+@php
+    $user = auth()->user();
+    $email = $user->email ?? '';
+    $isClient = ($user->role === 'client' || \App\Models\Client::where('email', $email)->exists());
+    $isEmployee = ($user->role === 'employee' || str_contains($email, 'emp') || $email === 'empLayan@fvs.com.sa');
+    $canManage = !$isClient && !$isEmployee;
+@endphp
+
 <!-- هيدر قسم الموظفين -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="task-page-title m-0">الموظفين</h2>
     
-    {{-- زر إضافة موظف جديد يظهر للأدمن فقط --}}
-    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+    @if($canManage)
         <button class="btn btn-add-task d-flex align-items-center gap-2" onclick="prepareAddEmployeeModal('{{ route('employees.store') }}')">
             <span>موظف جديد +</span>
         </button>
@@ -44,8 +51,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <span class="client-badge">موظف</span>
                             
-                            {{-- أزرار التعديل والحذف تظهر للأدمن فقط ولا تظهر للموظف --}}
-                            @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+                            @if($canManage)
                                 <div class="task-actions">
                                     <button type="button" class="btn-icon text-muted me-1 border-0 bg-transparent p-0" onclick="openEditEmployeeModal(this, '{{ route('employees.update', $employee) }}')">
                                         <i class="fa-regular fa-pen-to-square"></i>
@@ -74,7 +80,7 @@
 @endsection
 
 @push('modals')
-{{-- مودال الإضافة والتعديل والحذف لا يحتاجها الموظف لأن الأزرار مخفية عنه، وتبقى تعمل للأدمن بشكل طبيعي --}}
+@if($canManage)
 <!-- 1. مودال إضافة وتعديل موظف -->
 <div aria-hidden="true" class="modal fade" id="employeeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -131,6 +137,5 @@
         </div>
     </div>
 </div>
+@endif
 @endpush
-
-

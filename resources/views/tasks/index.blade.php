@@ -2,11 +2,19 @@
 @section('title', 'المهام')
 @section('content-class', 'p-4 flex-grow-1 d-flex flex-column overflow-hidden')
 
+@php
+    $user = auth()->user();
+    // التحقق الشامل لوجود العميل (سواء عبر الـ role أو جدول العملاء)
+    $isClient = $user && ($user->role === 'client' || \App\Models\Client::where('email', $user->email)->exists());
+    $isAdmin = $user && (str_contains($user->email, 'adm') || $user->role === 'admin');
+    $isLayan = $user && $user->email === 'empLayan@fvs.com.sa';
+@endphp
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="task-page-title m-0">المهام</h2>
-    {{-- إخفاء زر إضافة مهمة عن الموظفة والعميل --}}
-    @if(auth()->user()->email !== 'empLayan@fvs.com.sa' && !\App\Models\Client::where('email', auth()->user()->email)->exists())
+    {{-- إخفاء زر إضافة مهمة عن الموظفة Layan وعن العميل --}}
+    @if(!$isClient && !$isLayan)
     <button class="btn btn-add-task d-flex align-items-center gap-2" data-bs-target="#taskModal" data-bs-toggle="modal" onclick="prepareAddModal()">
         <span>إضافة مهمة +</span>
     </button>
@@ -55,16 +63,16 @@
                                 </a>
                             </h4>
                             
-                            {{-- الأكشنز: الأدمن يرى تعديل وحذف، الموظف يرى تعديل الحالة، والعميل لا يرى شيئاً --}}
-                            @if(!\App\Models\Client::where('email', auth()->user()->email)->exists())
+                            {{-- الأكشنز: تظهر فقط للأدمن أو الموظفة، وتختفي تماماً عند تسجيل دخول العميل --}}
+                            @if(!$isClient)
                             <div class="task-actions d-flex align-items-center gap-2">
-                                @if(str_contains(Auth::user()->email, 'adm') || auth()->user()->email !== 'empLayan@fvs.com.sa')
+                                @if($isAdmin || !$isLayan)
                                     <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openEditModal(this)"><i class="fa-regular fa-pen-to-square"></i></button>
-                                    @if(str_contains(Auth::user()->email, 'adm'))
+                                    @if($isAdmin)
                                         <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openDeleteModal(this)"><i class="fa-regular fa-trash-can"></i></button>
                                     @endif
                                 @else
-                                    {{-- أيقونة تعديل خاصة للموظف لتعديل الحالة فقط --}}
+                                    {{-- أيقونة تعديل خاصة للموظفة لتعديل الحالة فقط --}}
                                     <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل الحالة" onclick="openEmployeeTaskStatusModal('{{ $task->task_id }}', '{{ $task->status }}', '{{ route('tasks.update', $task->task_id) }}')">
                                         <i class="fa-regular fa-pen-to-square"></i>
                                     </button>
@@ -99,9 +107,9 @@
 @endsection
 
 @push('modals')
-{{-- الموديلات تظهر فقط للأدمن والموظفة، وتُحجب تماماً عن العميل --}}
-@if(!\App\Models\Client::where('email', auth()->user()->email)->exists())
-    @if(auth()->user()->email !== 'empLayan@fvs.com.sa')
+{{-- الموديلات تُحجب تماماً عن العميل --}}
+@if(!$isClient)
+    @if(!$isLayan)
     <div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -124,7 +132,7 @@
                             <label class="custom-label mb-1">اسم المشروع <span class="text-danger">*</span></label>
                             <select class="form-select custom-input text-center" id="projectIdInput" name="project_id" onchange="updateProjectDatesLimits()" required>
                                 <option value="">اختر المشروع</option>
-                                @foreach($projects as $project)
+                                @foreach($projects ?? [] as $project)
                                     <option value="{{ $project->project_id }}" 
                                             data-start="{{ $project->start_project }}" 
                                             data-end="{{ $project->end_project }}"
@@ -140,7 +148,7 @@
                                 <label class="custom-label mb-1">اسم الشركة <span class="text-danger">*</span></label>
                                 <select class="form-select custom-input text-center" id="companyNameInput" name="company_name" required>
                                     <option value="">اختر الشركة</option>
-                                    @foreach($projects->unique('company_name') as $project)
+                                    @foreach(collect($projects ?? [])->unique('company_name') as $project)
                                         <option value="{{ $project->company_name }}">{{ $project->company_name }}</option>
                                     @endforeach
                                 </select>
@@ -150,7 +158,7 @@
                                 <label class="custom-label mb-1">مسند إلى <span class="text-danger">*</span></label>
                                 <select class="form-control custom-input text-end" id="assignedToInput" name="assigned_to" required>
                                     <option value="">اختر الموظف</option>
-                                    @foreach($employees as $employee)
+                                    @foreach($employees ?? [] as $employee)
                                         <option value="{{ $employee->employee_id }}">{{ $employee->name }} ({{ $employee->department }})</option>
                                     @endforeach
                                 </select>
@@ -193,7 +201,8 @@
         </div>
     </div>
 
-    {{-- Modal الحذف --}}
+    {{-- Modal الحذف (للأدمن فقط) --}}
+    @if($isAdmin)
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4 text-center">
@@ -212,8 +221,10 @@
         </div>
     </div>
     @endif
+    @endif
 
     {{-- Modal خاص بالموظف لتعديل حالة المهمة فقط --}}
+    @if(!$isAdmin)
     <div aria-hidden="true" class="modal fade" id="employeeTaskStatusModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -243,6 +254,6 @@
             </div>
         </div>
     </div>
+    @endif
 @endif
 @endpush
-

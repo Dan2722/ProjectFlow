@@ -3,42 +3,53 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Notifications\SystemActivityNotification;
 
 class ProjectController extends Controller
 {
-    // عرض جميع المشاريع
+    // دوال مساعدة للتحقق من الصلاحيات
+    private function isClient()
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+        return Client::where('email', $user->email)->exists();
+    }
+
+    private function isEmployee()
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+        return $user->email === 'empLayan@fvs.com.sa';
+    }
+
+    // عرض جميع المشاريع (مع الفلترة للعميل)
     public function index()
     {
-        $projects = Project::with('user')->get();
         $user = auth()->user();
+        $client = Client::where('email', $user->email)->first();
 
-    // التحقق هل المستخدم عميل (أي مسجل في جدول clients بنفس الإيميل وليس أدمن أو موظف مثل لارين)
-    $client = \App\Models\Client::where('email', $user->email)->first();
+        if ($client) {
+            // العميل يرى مشروعه المرتبط فقط للاستطلاع
+            $projects = Project::where('project_name', $client->project_name)
+                        ->with(['employee', 'tasks'])
+                        ->get();
+        } elseif ($this->isEmployee()) {
+            // صلاحيات الموظفة (لارين)
+            $projects = Project::with(['employee', 'tasks'])->get();
+        } else {
+            // صلاحيات الأدمن (كل المشاريع)
+            $projects = Project::with(['employee', 'tasks'])->get();
+        }
 
-    if ($client) {
-        // إذا كان عميل: نجلب فقط المشروع المرتبط به (بناءً على اسم المشروع أو الـ ID حسب ربطك)
-        // ونجلب معه الموظف المسؤول ومهامه فقط
-        $projects = \App\Models\Project::where('project_name', $client->project_name)
-                    ->with(['employee', 'tasks']) // تأكد أن علاقة employee و tasks معرفة في مودل Project
-                    ->get();
-    } elseif ($user->email === 'empLayan@fvs.com.sa') {
-        // صلاحيات الموظفة (لارين)
-        $projects = \App\Models\Project::with(['employee', 'tasks'])->get();
-    } else {
-        // صلاحيات الأدمن (كل المشاريع)
-        $projects = \App\Models\Project::with(['employee', 'tasks'])->get();
+        return view('projects.index', compact('projects'));
     }
 
-    return view('projects.index', compact('projects'));
-    }
-
-    // حفظ مشروع جديد
+    // حفظ مشروع جديد (ممنوع للعميل والموظف)
     public function store(Request $request)
     {
-        // حماية: الموظف ممنوع من إضافة المشاريع
-        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+        if ($this->isClient() || $this->isEmployee()) {
             abort(403, 'عذراً، لا تمتلك صلاحية إضافة مشاريع.');
         }
 
@@ -61,7 +72,6 @@ class ProjectController extends Controller
             'user_id'             => auth()->id(),
         ]);
 
-        // إشعار إضافة المشروع مع اسم المشروع
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'إضافة مشروع',
@@ -77,16 +87,30 @@ class ProjectController extends Controller
     public function show($id)
     {
         $project = Project::with(['tasks', 'user'])->findOrFail($id);
+
+        // حماية إضافية للعميل لكي لا يستعرض إلا مشروعه الخاص فقط
+        if ($this->isClient()) {
+            $client = Client::where('email', auth()->user()->email)->first();
+            if ($client && $project->project_name !== $client->project_name) {
+                abort(403, 'عذراً، ليس لديك صلاحية استعراض هذا المشروع.');
+            }
+        }
+
         return view('projects.show', compact('project'));
     }
 
     // تحديث بيانات مشروع
     public function update(Request $request, $id)
     {
+        // حماية صارمة: العميل ممنوع من التعديل تماماً (استطلاع فقط)
+        if ($this->isClient()) {
+            abort(403, 'عذراً، لا تمتلك صلاحية تعديل المشاريع.');
+        }
+
         $project = Project::findOrFail($id);
 
-        // إذا كان المستخدم هو الموظف، نسمح له بتحديث "الحالة" فقط ونمنع تعديل باقي البيانات
-        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+        // إذا كان المستخدم هو الموظف، نسمح له بتحديث "الحالة" فقط
+        if ($this->isEmployee()) {
             $request->validate([
                 'status' => 'required|string',
             ]);
@@ -106,7 +130,7 @@ class ProjectController extends Controller
             return redirect()->back()->with('success', 'تم تحديث حالة المشروع بنجاح');
         }
 
-        // للأدمن: التحقق والتعديل الكامل لكافة الحقول
+        // للأدمن: التعديل الكامل لكافة الحقول
         $request->validate([
             'project_name'        => 'required|string|max:255',
             'company_name'        => 'required|string|max:255',
@@ -125,7 +149,6 @@ class ProjectController extends Controller
             'status'              => $request->status,
         ]);
 
-        // إشعار التعديل مع اسم المشروع
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'تعديل مشروع',
@@ -140,8 +163,8 @@ class ProjectController extends Controller
     // حذف مشروع
     public function destroy($id)
     {
-        // حماية: الموظف ممنوع من حذف المشاريع
-        if (auth()->user()->email === 'empLayan@fvs.com.sa') {
+        // حماية صارمة: العميل والموظف ممنوعان من الحذف تماماً
+        if ($this->isClient() || $this->isEmployee()) {
             abort(403, 'عذراً، لا تمتلك صلاحية حذف المشاريع.');
         }
 
@@ -150,7 +173,6 @@ class ProjectController extends Controller
 
         $project->delete();
 
-        // إشعار الحذف مع اسم المشروع
         if (auth()->check()) {
             auth()->user()->notify(new SystemActivityNotification(
                 'حذف مشروع',

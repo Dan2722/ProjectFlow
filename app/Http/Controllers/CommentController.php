@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 use App\Notifications\SystemActivityNotification;
+use Illuminate\Support\Facades\Storage;
 
 class CommentController extends Controller
 {
@@ -31,7 +32,6 @@ class CommentController extends Controller
                 'task_id'      => $task_id,
                 'user_id'      => $userId,
             ]);
-            // نصفر النص للتعليق الثاني لو أرسل ملف وصورة معاً لكي لا يتكرر النص مرتين
             $request->merge(['comment_text' => '']);
         }
 
@@ -64,6 +64,65 @@ class CommentController extends Controller
                 ));
             } catch (\Exception $e) {}
         }
+
+        return redirect()->back();
+    }
+
+    public function update(Request $request, $id)
+    {
+        $comment = Comment::findOrFail($id);
+
+        // التحقق من أن المستخدم هو صاحب التعليق
+        if ($comment->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'comment_text' => 'nullable|string',
+            'attachment'   => 'nullable|file|mimes:pdf,doc,docx,zip,fig,jpg,jpeg,png,gif|max:10240',
+        ]);
+
+        if (empty($request->comment_text) && !$request->hasFile('attachment') && !$comment->attachment && $request->input('remove_attachment') != '1') {
+            return back()->withErrors(['comment_text' => 'يجب كتابة تعليق أو إرفاق ملف أو صورة.']);
+        }
+
+        // إذا طلب المستخدم إزالة المرفق الحالي
+        if ($request->input('remove_attachment') == '1') {
+            if ($comment->attachment && Storage::disk('public')->exists($comment->attachment)) {
+                Storage::disk('public')->delete($comment->attachment);
+            }
+            $comment->attachment = null;
+        }
+
+        // إذا تم إرفاق ملف أو صورة جديدة للاستبدال
+        if ($request->hasFile('attachment')) {
+            if ($comment->attachment && Storage::disk('public')->exists($comment->attachment)) {
+                Storage::disk('public')->delete($comment->attachment);
+            }
+
+            $path = $request->file('attachment')->store('comments', 'public');
+            $comment->attachment = $path;
+        }
+
+        $comment->comment_text = $request->comment_text ?? '';
+        $comment->save();
+
+        return redirect()->back();
+    }
+
+    public function destroy($id)
+    {
+        $comment = Comment::findOrFail($id);
+
+        if ($comment->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($comment->attachment && Storage::disk('public')->exists($comment->attachment)) {
+            Storage::disk('public')->delete($comment->attachment);
+        }
+
+        $comment->delete();
 
         return redirect()->back();
     }

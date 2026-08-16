@@ -77,3 +77,14 @@ Route::middleware(['auth'])->group(function () {
         return response()->json(['status' => 'success']);
     })->name('notifications.read');
 });
+
+Route::middleware(['auth'])->group(function () {
+    // ... المسارات الأخرى ...
+
+    Route::get('/project-tasks/{task}', fn ($task) => view('tasks.project-show', compact('task')))->name('tasks.project-show');
+    Route::post('/tasks/{taskId}/comments', [CommentController::class, 'store'])->name('comments.store');
+    
+    // أضف هذه السطور:
+    Route::put('/comments/{comment}', [CommentController::class, 'update'])->name('comments.update');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+});

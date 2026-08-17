@@ -318,5 +318,38 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+    function openEditCommentModal(button, updateUrl) {
+        let item = button.closest('.comment-item');
+        let text = item.getAttribute('data-comment-text');
+        
+        document.getElementById('editCommentInput').value = text;
+        document.getElementById('editCommentForm').action = updateUrl;
+        
+        let modal = new bootstrap.Modal(document.getElementById('editCommentModal'));
+        modal.show();
+    }
 
+    function openDeleteCommentModal(button, deleteUrl) {
+        document.getElementById('deleteCommentForm').action = deleteUrl;
+        let modal = new bootstrap.Modal(document.getElementById('deleteCommentModal'));
+        modal.show();
+    }
+
+    function showFileName(input, previewId, textId) {
+        if (input.files && input.files[0]) {
+            document.getElementById(textId).innerText = input.files[0].name;
+            document.getElementById(previewId).classList.remove('d-none');
+            document.getElementById(previewId).classList.add('d-flex');
+        }
+    }
+
+    function removeFile(inputId, previewId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(previewId).classList.add('d-none');
+        document.getElementById(previewId).classList.remove('d-flex');
+    }
+</script>
+@endpush
 @endsection

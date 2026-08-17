@@ -17,6 +17,7 @@ return new class extends Migration
         $table->text('project_description');
         $table->date('start_project');
         $table->date('end_project');
+        $table->unsignedInteger('progress')->default(0);
         $table->string('status')->default('Not started'); 
         
         // التعديل هنا: تحديد المفتاح المستهدف 'user_id' في جدول 'users'

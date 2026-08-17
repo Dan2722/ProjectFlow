@@ -4,7 +4,6 @@
 
 @push('styles')
 <style>
-    /* تخصيص لون وشكل شريط التمرير الداخلي لأقسام الحالات */
     .flex-grow-1.overflow-auto::-webkit-scrollbar {
         width: 6px;
     }
@@ -29,7 +28,6 @@
     $isAdmin = $user && ($user->role === 'admin' || str_contains($user->email, 'adm'));
 @endphp
 
-<!-- رسائل التنبيه والنجاح -->
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show text-start mb-3 rounded-3 shadow-sm py-2 px-3 small" role="alert">
         <i class="fa-regular fa-circle-check me-2"></i> {{ session('success') }}
@@ -44,7 +42,21 @@
     </div>
 @endif
 
-<!-- مسار التنقل (Breadcrumb) -->
+@if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show text-start mb-3 rounded-3 shadow-sm py-2 px-3 small" role="alert">
+        <div class="d-flex align-items-center mb-1">
+            <i class="fa-regular fa-circle-xmark me-2"></i>
+            <span class="fw-bold">تنبيه:</span>
+        </div>
+        <ul class="mb-0 ps-3">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb mb-0" style="font-size: 14px;">
         <li class="breadcrumb-item"><a class="text-decoration-none text-muted" href="{{ route('projects.index') }}" id="breadcrumbProj">المشاريع</a></li>
@@ -52,7 +64,6 @@
     </ol>
 </nav>
 
-<!-- عنوان الصفحة وزر إضافة مهمة (يُخفي زر الإضافة نهائياً عند تسجيل دخول العميل) -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="task-page-title m-0" id="pageMainTitle">المشاريع</h1>
     @if(!$isClient)
@@ -63,10 +74,10 @@
 </div>
 
 @php
-    // مصفوفة خريطة الأيقونات الموحدة لكل الحالات
     $statusIconsMap = [
         'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
         'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard', 'class' => ''],
+        'مكتمل'        => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
         'مكتملة'       => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
         'متوقف مؤقتا'  => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''],
         'متوقف مؤقتاً' => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''],
@@ -77,7 +88,6 @@
     $projectStatusMeta = $statusIconsMap[$projectStatus] ?? ['icon' => 'fa-regular fa-id-badge', 'class' => ''];
 @endphp
 
-<!-- كارد المشروع الرئيسي -->
 <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" style="border: 1px solid #EFEEF3 !important;">
     <div class="row align-items-center">
         <div class="col-lg-8">
@@ -98,9 +108,8 @@
         </div>
         
         @php
-            $totalTasksCount = $project->tasks->count();
-            $completedTasksCount = $project->tasks->where('status', 'مكتملة')->count();
-            $progressPercentage = $totalTasksCount > 0 ? round(($completedTasksCount / $totalTasksCount) * 100) : 0;
+            // هنا تم استخدام قيمة progress المخزنة في قاعدة البيانات مباشرة بدلاً من الحساب اليدوي
+            $progressPercentage = $project->progress ?? 0;
         @endphp
 
         <div class="col-lg-4 mt-3 mt-lg-0 text-lg-end">
@@ -123,11 +132,11 @@
     </div>
 </div>
 
-<!-- شبكة أعمدة الحالات -->
 @php
     $statuses = [
         'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
         'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard', 'class' => ''],
+        'مكتمل'        => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
         'مكتملة'       => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
         'متوقف مؤقتا'  => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''],
         'قيد الانتظار' => ['icon' => 'fa-solid fa-list-check', 'class' => '']
@@ -143,7 +152,6 @@
 
         <div class="col">
             <div class="card border rounded-4 p-3 bg-white shadow-sm d-flex flex-column" style="border-color: #EFEEF3 !important; height: 440px;">
-                <!-- رأس العمود -->
                 <div class="status-header d-flex align-items-center justify-content-start gap-2 mb-3">
                     <span class="status-title">{{ $statusName }}</span>
                     <i class="{{ $statusMeta['icon'] }} status-icon status-success-icon {{ $statusMeta['class'] }} ms-auto" style="color: #8A84AD;"></i>
@@ -176,13 +184,11 @@
                                     </div>
 
                                     <div class="task-actions d-flex align-items-center gap-2" style="font-size: 14px;">
-                                        {{-- أزرار التعديل والحذف للأدمن فقط --}}
                                         @if($isAdmin)
                                             <button class="btn-icon border-0 bg-transparent p-0" onclick="openEditModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-pen-to-square"></i></button>
                                             <button class="btn-icon border-0 bg-transparent p-0" onclick="openDeleteModal(this)" style="color: #8A84AD;"><i class="fa-regular fa-trash-can"></i></button>
                                         @endif
 
-                                        {{-- أيقونة وعدد التعليقات تظهر للجميع (بما فيهم العميل) --}}
                                         <div class="d-flex align-items-center gap-1" style="color: #8A84AD;">
                                             <i class="fa-regular fa-comment"></i>
                                             <span style="font-size: 12px;">{{ $task->comments_count ?? ($task->comments ? $task->comments->count() : 0) }}</span>
@@ -204,9 +210,7 @@
 @endsection
 
 @push('modals')
-{{-- الموديلات تظهر للأدمن فقط للإضافة والتعديل، وتُحجب تماماً عن العميل --}}
 @if(!$isClient)
-    {{-- Modal إضافة / تعديل المهمة --}}
     <div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -245,14 +249,20 @@
                         </div>
                         
                         <div class="col-6">
-                            <label class="form-label custom-label">مسند إلى</label>
-                            <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to">
-                                <option value="">اختر الموظف</option>
-                                @foreach($employees ?? [] as $employee)
-                                    <option value="{{ $employee->employee_id ?? $employee->id }}">{{ $employee->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+    <label class="form-label custom-label">مسند إلى</label>
+    <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to">
+        <option value="">اختر الموظف</option>
+        @php
+            // جلب الموظفين من المتغير المرسل أو مباشرة من قاعدة البيانات كاحتياطي آمن لضمان ظهور الجميع
+            $allEmployees = isset($employees) && count($employees) > 0 
+                ? $employees 
+                : (\class_exists(\App\Models\Employee::class) ? \App\Models\Employee::all() : \App\Models\User::all());
+        @endphp
+        @foreach($allEmployees as $employee)
+            <option value="{{ $employee->employee_id ?? $employee->id }}">{{ $employee->name }}</option>
+        @endforeach
+    </select>
+</div>
                     </div>
 
                     <div class="mb-3">
@@ -263,11 +273,11 @@
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label class="form-label custom-label">تاريخ البدء <span class="text-danger">*</span></label>
-                            <input class="form-control custom-date-btn w-100" id="startDateInput" name="start_task" required type="date"/>
+                            <input class="form-control custom-date-btn w-100" id="startDateInput" name="start_task" required type="date" min="{{ $project->start_project }}" max="{{ $project->end_project }}" onchange="document.getElementById('endDateInput').min = this.value;"/>
                         </div>
                         <div class="col-6">
                             <label class="form-label custom-label">تاريخ الانتهاء <span class="text-danger">*</span></label>
-                            <input class="form-control custom-date-btn w-100" id="endDateInput" name="end_task" required type="date"/>
+                            <input class="form-control custom-date-btn w-100" id="endDateInput" name="end_task" required type="date" min="{{ $project->start_project }}" max="{{ $project->end_project }}"/>
                         </div>
                     </div>
 
@@ -280,6 +290,11 @@
                             <option value="متوقف مؤقتاً">متوقف مؤقتاً</option>
                             <option value="قيد الانتظار">قيد الانتظار</option>
                         </select>
+                        @error('status')
+                            <div class="text-danger mt-1 text-end" style="color: red; font-size: 0.85rem; font-weight: bold;">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
 
                     <div class="text-center">
@@ -290,7 +305,6 @@
         </div>
     </div>
 
-    {{-- Modal الحذف (للأدمن فقط) --}}
     @if($isAdmin)
     <div aria-hidden="true" class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">

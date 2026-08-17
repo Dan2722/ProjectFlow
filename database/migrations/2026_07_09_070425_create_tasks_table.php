@@ -17,6 +17,8 @@ return new class extends Migration
             $table->text('task_description');
             $table->date('start_task');
             $table->date('end_task');
+            $table->string('company_name')->nullable();
+            $table->unsignedInteger('progress')->default(0);
             $table->string('status')->default('Not started');
             
             // ربط المهمة بالمشروع

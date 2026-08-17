@@ -118,10 +118,8 @@ function openDeleteProjectModal(button, deleteUrl) {
     }
 }
 
-/* ==========================================
-   3. إدارة المهام والتواريخ (Tasks & Validations)[cite: 1]
-========================================== */
-// دالة موحدة للتحقق من التواريخ (تم دمج تكرارات validateDates في دالة واحدة)[cite: 1]
+/* dates (tasks&project) */
+
 function validateDates() {
     const startDateInput = document.getElementById('startDateInput');
     const endDateInput = document.getElementById('endDateInput');
@@ -250,26 +248,14 @@ function updateProjectDatesLimits() {
         const projectStart = selectedOption.getAttribute('data-start');
         const projectEnd = selectedOption.getAttribute('data-end');
 
-        startDateInput.min = projectStart;
-        startDateInput.max = projectEnd;
-        endDateInput.min = projectStart;
-        endDateInput.max = projectEnd;
-
-        startDateInput.value = '';
-        endDateInput.value = '';
-    } else {
-        startDateInput.value = '';
-        endDateInput.value = '';
-        startDateInput.min = '';
-        startDateInput.max = '';
-        endDateInput.min = '';
-        endDateInput.max = '';
+        if (projectStart) startDateInput.min = projectStart;
+        if (projectEnd) startDateInput.max = projectEnd;
+        if (projectStart) endDateInput.min = projectStart;
+        if (projectEnd) endDateInput.max = projectEnd;
     }
 }
 
-/* ==========================================
-   4. إدارة العملاء (Clients Operations)[cite: 1]
-========================================== */
+/* tasks page*/
 function prepareAddClientModal(storeUrl) {
     const modalTitle = document.getElementById('clientModalTitle');
     const clientForm = document.getElementById('clientForm');

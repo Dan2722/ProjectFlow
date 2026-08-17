@@ -4,16 +4,29 @@
 
 @php
     $user = auth()->user();
-    // التحقق الشامل لوجود العميل (سواء عبر الـ role أو جدول العملاء)
     $isClient = $user && ($user->role === 'client' || \App\Models\Client::where('email', $user->email)->exists());
     $isAdmin = $user && (str_contains($user->email, 'adm') || $user->role === 'admin');
     $isLayan = $user && $user->email === 'empLayan@fvs.com.sa';
 @endphp
 
 @section('content')
+@if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show text-start mb-3 rounded-3 shadow-sm py-2 px-3 small" role="alert">
+        <div class="d-flex align-items-center mb-1">
+            <i class="fa-regular fa-circle-xmark me-2"></i>
+            <span class="fw-bold">تنبيه:</span>
+        </div>
+        <ul class="mb-0 ps-3">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="task-page-title m-0">المهام</h2>
-    {{-- إخفاء زر إضافة مهمة عن الموظفة Layan وعن العميل --}}
     @if(!$isClient && !$isLayan)
     <button class="btn btn-add-task d-flex align-items-center gap-2" data-bs-target="#taskModal" data-bs-toggle="modal" onclick="prepareAddModal()">
         <span>إضافة مهمة +</span>
@@ -27,7 +40,7 @@
         'قيد التنفيذ'  => ['icon' => 'fa-regular fa-id-badge', 'class' => ''],
         'قيد المراجعة' => ['icon' => 'fa-regular fa-clipboard', 'class' => ''],
         'مكتملة'       => ['icon' => 'fa-regular fa-circle-check', 'class' => 'text-success'],
-        'متوقف مؤقتاً'  => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''], 
+        'متوقف مؤقتاً' => ['icon' => 'fa-regular fa-circle-stop', 'class' => ''], 
         'قيد الانتظار' => ['icon' => 'fa-solid fa-list-check', 'class' => '']
     ];
   @endphp
@@ -63,7 +76,6 @@
                                 </a>
                             </h4>
                             
-                            {{-- الأكشنز: تظهر فقط للأدمن أو الموظفة، وتختفي تماماً عند تسجيل دخول العميل --}}
                             @if(!$isClient)
                             <div class="task-actions d-flex align-items-center gap-2">
                                 @if($isAdmin || !$isLayan)
@@ -72,7 +84,6 @@
                                         <button class="btn-icon text-muted border-0 bg-transparent p-0" onclick="openDeleteModal(this)"><i class="fa-regular fa-trash-can"></i></button>
                                     @endif
                                 @else
-                                    {{-- أيقونة تعديل خاصة للموظفة لتعديل الحالة فقط --}}
                                     <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل الحالة" onclick="openEmployeeTaskStatusModal('{{ $task->task_id }}', '{{ $task->status }}', '{{ route('tasks.update', $task->task_id) }}')">
                                         <i class="fa-regular fa-pen-to-square"></i>
                                     </button>
@@ -107,7 +118,6 @@
 @endsection
 
 @push('modals')
-{{-- الموديلات تُحجب تماماً عن العميل --}}
 @if(!$isClient)
     @if(!$isLayan)
     <div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
@@ -154,15 +164,17 @@
                                 </select>
                             </div>
                             
-                            <div class="col-6 text-end">
-                                <label class="custom-label mb-1">مسند إلى <span class="text-danger">*</span></label>
-                                <select class="form-control custom-input text-end" id="assignedToInput" name="assigned_to" required>
-                                    <option value="">اختر الموظف</option>
-                                    @foreach($employees ?? [] as $employee)
-                                        <option value="{{ $employee->employee_id }}">{{ $employee->name }} ({{ $employee->department }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                         <div class="col-6">
+    <label class="form-label custom-label">مسند إلى <span class="text-danger">*</span></label>
+    <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to" required>
+        <option value="">اختر الموظف</option>
+        @foreach($employees ?? [] as $employee)
+            <option value="{{ $employee->employee_id ?? $employee->id }}">
+                {{ $employee->name }} {{ isset($employee->department) ? '('.$employee->department.')' : '' }}
+            </option>
+        @endforeach
+    </select>
+</div>
                         </div>
 
                         <div class="mb-3 text-end">
@@ -173,7 +185,7 @@
                         <div class="row g-2 mb-3">
                             <div class="col-6 text-end">
                                 <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
-                                <input class="form-control custom-date-btn text-center" id="startDateInput" name="start_task" required type="date"/>
+                                <input class="form-control custom-date-btn text-center" id="startDateInput" name="start_task" required type="date" onchange="document.getElementById('endDateInput').min = this.value;"/>
                             </div>
                             <div class="col-6 text-end">
                                 <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
@@ -201,7 +213,6 @@
         </div>
     </div>
 
-    {{-- Modal الحذف (للأدمن فقط) --}}
     @if($isAdmin)
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -223,7 +234,6 @@
     @endif
     @endif
 
-    {{-- Modal خاص بالموظف لتعديل حالة المهمة فقط --}}
     @if(!$isAdmin)
     <div aria-hidden="true" class="modal fade" id="employeeTaskStatusModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">

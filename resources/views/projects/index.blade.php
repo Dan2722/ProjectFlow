@@ -8,9 +8,22 @@
     $isEmployee = $user && ($user->role === 'employee' || str_contains($user->email, 'emp'));
 @endphp
 
-
 @section('content')
-<!-- رأس الصفحة: العنوان وزر الإضافة (يظهر للأدمن فقط) -->
+@if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show text-start mb-3 rounded-3 shadow-sm py-2 px-3 small" role="alert">
+        <div class="d-flex align-items-center mb-1">
+            <i class="fa-regular fa-circle-xmark me-2"></i>
+            <span class="fw-bold">تنبيه:</span>
+        </div>
+        <ul class="mb-0 ps-3">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div class="d-flex align-items-center gap-3">
         <h2 class="task-page-title m-0">المشاريع</h2>
@@ -23,10 +36,13 @@
     @endif
 </div>
 
-<!-- حاوية كروت المشاريع الديناميكية -->
 <div class="projects-scroll-container">
     <div class="row g-4" id="projectsGrid">
         @forelse($projects as $project)
+    @php
+        $totalTasks = $project->tasks ? $project->tasks->count() : 0;
+        $progress = $project->progress ?? 0;
+    @endphp
             <div class="col-12 col-md-6 col-lg-4 project-card-wrapper" 
                  data-project-id="{{ $project->project_id }}"
                  data-project-name="{{ $project->project_name }}"
@@ -48,20 +64,16 @@
                             <p class="project-card-desc mb-0">{{ $project->project_description }}</p>
                         </div>
                         
-                        <!-- أزرار التعديل والحذف مخفية تماماً عن العميل -->
                         @if(!$isClient)
                         <div class="d-flex align-items-center gap-1">
                             @if(!$isEmployee)
-                                <!-- زر التعديل الشامل للأدمن -->
                                 <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل" onclick="openEditProjectModal(this, '{{ route('projects.update', $project->project_id) }}')">
                                     <i class="fa-regular fa-pen-to-square"></i>
                                 </button>
-                                <!-- زر الحذف للأدمن -->
                                 <button class="btn-icon text-muted border-0 bg-transparent p-0 ms-1" title="حذف" onclick="openDeleteProjectModal(this, '{{ route('projects.destroy', $project->project_id) }}')">
                                     <i class="fa-regular fa-trash-can"></i>
                                 </button>
                             @else
-                                <!-- زر تعديل الحالة للموظف -->
                                 <button class="btn-icon text-muted border-0 bg-transparent p-0" title="تعديل حالة المشروع" onclick="openEmployeeProjectStatusModal('{{ $project->project_id }}', '{{ $project->status }}', '{{ route('projects.update', $project->project_id) }}')">
                                     <i class="fa-regular fa-pen-to-square"></i>
                                 </button>
@@ -70,7 +82,17 @@
                         @endif
                     </div>
 
-                    <!-- عرض اسم الشركة والمهام -->
+                    <!-- نسبة الإنجاز وشريط التقدم -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark" style="font-size: 15px;">{{ $progress }}%</span>
+                            <span class="text-muted small">الإنجاز</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background-color: #f0f0f5; border-radius: 3px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ $progress }}%; background-color: #8A84AD; border-radius: 3px;" aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
                     <div class="d-flex align-items-center justify-content-between text-muted extra-small mb-3">
                         <div class="d-flex align-items-center gap-1">
                             <i class="fa-regular fa-building"></i>
@@ -78,7 +100,7 @@
                         </div>
                         <div class="d-flex align-items-center gap-1">
                             <i class="fa-solid fa-list-check"></i>
-                            <span>{{ $project->tasks_count ?? ($project->tasks ? $project->tasks->count() : 0) }} مهام</span>
+                            <span>{{ $totalTasks }} مهام</span>
                         </div>
                     </div>
 
@@ -107,7 +129,6 @@
 @push('modals')
 @if(!$isClient)
     @if(!$isEmployee)
-    <!-- 1. مودال إضافة وتعديل مشروع (للأدمن) -->
     <div aria-hidden="true" class="modal fade" id="projectModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -138,11 +159,11 @@
                         <div class="row g-2 mb-3">
                             <div class="col-6 text-end">
                                 <label class="custom-label mb-1">تاريخ البدء <span class="text-danger">*</span></label>
-                                <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" min="{{ date('Y-m-d') }}"/>
+                                <input class="form-control custom-date-btn text-center" id="projectStartDateInput" name="start_project" required type="date" onchange="document.getElementById('projectEndDateInput').min = this.value;"/>
                             </div>
                             <div class="col-6 text-end">
                                 <label class="custom-label mb-1">تاريخ الانتهاء <span class="text-danger">*</span></label>
-                                <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date" min="{{ date('Y-m-d') }}"/>
+                                <input class="form-control custom-date-btn text-center" id="projectEndDateInput" name="end_project" required type="date"/>
                             </div>
                         </div>
 
@@ -166,7 +187,6 @@
         </div>
     </div>
 
-    <!-- 2. مودال تأكيد الحذف للمشروع (للأدمن) -->
     <div class="modal fade" id="deleteProjectModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4 text-center">
@@ -187,7 +207,6 @@
     @endif
 
     @if($isEmployee)
-    <!-- مودال خاص بالموظف لتعديل حالة المشروع فقط -->
     <div aria-hidden="true" class="modal fade" id="employeeProjectStatusModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -219,4 +238,76 @@
     </div>
     @endif
 @endif
+@endpush
+
+@push('scripts')
+<script>
+    function prepareAddProjectModal(actionUrl) {
+        document.getElementById('projectForm').action = actionUrl;
+        document.getElementById('projectFormMethod').value = 'POST';
+        document.getElementById('projectModalTitle').innerText = 'إضافة مشروع جديد';
+        document.getElementById('projectNameInput').value = '';
+        document.getElementById('projectCompanyNameInput').value = '';
+        document.getElementById('projectDescInput').value = '';
+        
+        // عند الإضافة: يقبل من تاريخ اليوم فصاعداً ولا يقبل تواريخ ماضية
+        const today = new Date().toISOString().split('T')[0];
+        const startDateInput = document.getElementById('projectStartDateInput');
+        startDateInput.min = today;
+        startDateInput.value = today;
+        
+        const endDateInput = document.getElementById('projectEndDateInput');
+        endDateInput.min = today;
+        endDateInput.value = '';
+
+        document.getElementById('projectStatusSelect').value = 'قيد التنفيذ';
+
+        var myModal = new bootstrap.Modal(document.getElementById('projectModal'));
+        myModal.show();
+    }
+
+    function openEditProjectModal(button, actionUrl) {
+        const card = button.closest('.project-card-wrapper');
+        const form = document.getElementById('projectForm');
+        form.action = actionUrl;
+        document.getElementById('projectFormMethod').value = 'PUT';
+        document.getElementById('projectModalTitle').innerText = 'تعديل المشروع';
+
+        const startDate = card.getAttribute('data-start-date');
+        const endDate = card.getAttribute('data-end-date');
+        
+        document.getElementById('projectNameInput').value = card.getAttribute('data-project-name');
+        document.getElementById('projectCompanyNameInput').value = card.getAttribute('data-company-name');
+        document.getElementById('projectDescInput').value = card.getAttribute('data-project-desc');
+        
+        // عند التعديل: يبقي تاريخ البدء كما هو، ويسمح بالبدء من تاريخ البدء الأصلي فصاعداً
+        const startDateInput = document.getElementById('projectStartDateInput');
+        startDateInput.min = startDate; 
+        startDateInput.value = startDate;
+
+        const endDateInput = document.getElementById('projectEndDateInput');
+        endDateInput.min = startDate;
+        endDateInput.value = endDate;
+
+        document.getElementById('projectStatusSelect').value = card.getAttribute('data-status');
+
+        var myModal = new bootstrap.Modal(document.getElementById('projectModal'));
+        myModal.show();
+    }
+
+    function openDeleteProjectModal(button, actionUrl) {
+        const form = document.getElementById('deleteProjectForm');
+        form.action = actionUrl;
+        var myModal = new bootstrap.Modal(document.getElementById('deleteProjectModal'));
+        myModal.show();
+    }
+
+    function openEmployeeProjectStatusModal(projectId, currentStatus, actionUrl) {
+        const form = document.getElementById('employeeProjectStatusForm');
+        form.action = actionUrl;
+        document.getElementById('employeeProjectStatusSelect').value = currentStatus;
+        var myModal = new bootstrap.Modal(document.getElementById('employeeProjectStatusModal'));
+        myModal.show();
+    }
+</script>
 @endpush

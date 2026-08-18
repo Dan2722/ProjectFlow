@@ -10,6 +10,24 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ForgotPasswordController;
+
+Route::middleware('guest')->group(function () {
+    
+    // 1. عرض صفحة إدخال البريد الإلكتروني الأساسية
+    Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+
+    // 2. معالجة وفحص البريد الإلكتروني (المسار الذي كان ناقصاً وهو المسؤول عن تفعيل زر "التالي")
+    Route::post('forgot-password/process', [ForgotPasswordController::class, 'processDirectReset']);
+
+    // 3. عرض صفحة كلمة المرور الجديدة (التي أرسلتها أنت)
+    Route::get('reset-password-page', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset.page');
+
+    // 4. استقبال بيانات كلمة المرور الجديدة وتحديثها في القاعدة (التي أرسلتها أنت)
+    Route::post('reset-password/update', [ForgotPasswordController::class, 'updatePassword'])->name('password.update.action');
+    
+});
+
 
 // 1. الصفحة الرئيسية
 Route::get('/', function () {

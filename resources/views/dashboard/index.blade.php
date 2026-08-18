@@ -94,28 +94,30 @@
     
     <div class="recent-projects-container p-3 p-md-4">
         <div class="d-flex flex-column gap-3 recent-projects-scroll">
-            @forelse($recentProjects as $project)
-                @php
-                    $totalProjectTasks = $project->tasks->count();
-                    $completedProjectTasks = $project->tasks->where('status', 'مكتملة')->count();
-                    $progressPercentage = $totalProjectTasks > 0 ? round(($completedProjectTasks / $totalProjectTasks) * 100) : 0;
-                    
-                    // جلب الحالة من عمود status مباشرة مع القيمة الافتراضية
-                    $currentStatus = trim($project->status ?? 'قيد التنفيذ');
-                    if ($currentStatus === '') {
-                        $currentStatus = 'قيد التنفيذ';
-                    }
-                    
-                    // تحديد الأيقونة والكلاس المتوافق مع تنسيق الحالات في الـ CSS
-                    $statusIcon = match($currentStatus) {
-                        'مكتملة' => 'fa-regular fa-circle-check text-success',
-                        'قيد المراجعة' => 'fa-regular fa-clipboard',
-                        'قيد التنفيذ' => 'fa-solid fa-users-gear',
-                        'قيد الانتظار' => 'fa-solid fa-bars-staggered',
-                        'متوقف مؤقتاً', 'متوقف مؤقتا' => 'fa-regular fa-circle-stop',
-                        default => 'fa-solid fa-users-gear'
-                    };
-                @endphp
+           @forelse($recentProjects as $project)
+    @php
+        $totalProjectTasks = $project->tasks ? $project->tasks->count() : 0;
+        $completedProjectTasks = $project->tasks ? $project->tasks->where('status', 'مكتملة')->count() : 0;
+        
+        // أخذ نسبة الإنجاز مباشرة من المشروع تماماً مثل صفحة المشاريع
+        $progressPercentage = $project->progress ?? 0;
+        
+        // جلب الحالة من عمود status مباشرة مع القيمة الافتراضية
+        $currentStatus = trim($project->status ?? 'قيد التنفيذ');
+        if ($currentStatus === '') {
+            $currentStatus = 'قيد التنفيذ';
+        }
+        
+        // تحديد الأيقونة والكلاس المتوافق مع تنسيق الحالات في الـ CSS
+        $statusIcon = match($currentStatus) {
+            'مكتملة' => 'fa-regular fa-circle-check text-success',
+            'قيد المراجعة' => 'fa-regular fa-clipboard',
+            'قيد التنفيذ' => 'fa-solid fa-users-gear',
+            'قيد الانتظار' => 'fa-solid fa-bars-staggered',
+            'متوقف مؤقتاً', 'متوقف مؤقتا' => 'fa-regular fa-circle-stop',
+            default => 'fa-solid fa-users-gear'
+        };
+    @endphp
                 <div class="project-item-card p-3">
                     
                     <!-- السطر الأول: اسم المشروع وتحته اسم الشركة باتجاه اليمين + الحالة والأيقونة يسار -->

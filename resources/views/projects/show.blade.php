@@ -24,7 +24,8 @@
 @section('content')
 @php
     $user = auth()->user();
-    $isClient = $user && $user->role === 'client';
+    $isClient = $user && ($user->role === 'client' || (!str_contains($user->email, 'adm') && !str_contains($user->email, 'emp')));
+    $isEmployee = $user && ($user->role === 'employee' || str_contains($user->email, 'emp'));
     $isAdmin = $user && ($user->role === 'admin' || str_contains($user->email, 'adm'));
 @endphp
 
@@ -66,7 +67,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="task-page-title m-0" id="pageMainTitle">المشاريع</h1>
-    @if(!$isClient)
+    @if(!$isClient && !$isEmployee)
     <button class="btn btn-add-task d-flex align-items-center gap-2" data-bs-target="#taskModal" data-bs-toggle="modal" onclick="prepareAddModal()">
         <span>إضافة مهمة +</span>
     </button>
@@ -108,7 +109,6 @@
         </div>
         
         @php
-            // هنا تم استخدام قيمة progress المخزنة في قاعدة البيانات مباشرة بدلاً من الحساب اليدوي
             $progressPercentage = $project->progress ?? 0;
         @endphp
 
@@ -210,7 +210,7 @@
 @endsection
 
 @push('modals')
-@if(!$isClient)
+@if(!$isClient && !$isEmployee)
     <div aria-hidden="true" class="modal fade" id="taskModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content custom-modal p-4">
@@ -249,20 +249,19 @@
                         </div>
                         
                         <div class="col-6">
-    <label class="form-label custom-label">مسند إلى</label>
-    <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to">
-        <option value="">اختر الموظف</option>
-        @php
-            // جلب الموظفين من المتغير المرسل أو مباشرة من قاعدة البيانات كاحتياطي آمن لضمان ظهور الجميع
-            $allEmployees = isset($employees) && count($employees) > 0 
-                ? $employees 
-                : (\class_exists(\App\Models\Employee::class) ? \App\Models\Employee::all() : \App\Models\User::all());
-        @endphp
-        @foreach($allEmployees as $employee)
-            <option value="{{ $employee->employee_id ?? $employee->id }}">{{ $employee->name }}</option>
-        @endforeach
-    </select>
-</div>
+                            <label class="form-label custom-label">مسند إلى</label>
+                            <select class="form-select custom-input w-100" id="assignedToInput" name="assigned_to">
+                                <option value="">اختر الموظف</option>
+                                @php
+                                    $allEmployees = isset($employees) && count($employees) > 0 
+                                        ? $employees 
+                                        : (\class_exists(\App\Models\Employee::class) ? \App\Models\Employee::all() : \App\Models\User::all());
+                                @endphp
+                                @foreach($allEmployees as $employee)
+                                    <option value="{{ $employee->employee_id ?? $employee->id }}">{{ $employee->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-3">
